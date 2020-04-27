@@ -3,10 +3,13 @@ body{
   margin:40px auto;
   padding:0 10px;
   font:18px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  color:#000
+  color:#000;
   }
   h1,h2,h3{
     line-height:1.2
+  }
+  img {
+    background:#fdd;
   }
 }
 @media (prefers-color-scheme: dark) {
