@@ -5,14 +5,114 @@
     <title>Solar</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Solar">
-    <link rel="stylesheet" href="style.css">
+    <style>
+body{
+  max-width:650px;
+  margin:40px auto;
+  padding:0 10px;
+  font:18px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  color:#000;
+  }
+  h1,h2,h3{
+    line-height:1.2
+  }
+  img {
+    background:#eee;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  body{
+    color:white;
+    background:#444
+  }
+  a:link{
+    color:#5bf
+  }
+  a:visited{
+    color:#ccf
+  }
+}
+
+.flex-container {
+  /* We first create a flex layout context */
+  display: flex;
+  
+  /* Then we define the flow direction 
+     and if we allow the items to wrap 
+   * Remember this is the same as:
+   * flex-direction: row;
+   * flex-wrap: wrap;
+   */
+  flex-flow: row wrap;
+  
+  /* Then we define how is distributed the remaining space */
+  justify-content: space-around;
+  
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.flex-item {
+  // background: tomato;
+  background: #eee;
+  padding: 5px;
+  width: 150px;
+  margin-top: 10px;
+  line-height: 150px;
+  color: white;
+  font-weight: bold;
+  font-size: 0.7em;
+  text-align: center;
+}
+
+.flex-item h2 {
+  margin:0;
+  line-height: 20px;
+  color: #000;
+}
+.flex-item p {
+  margin:0;
+  border:0;
+  line-height: 20px;
+  color: #777;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+    </style>
   </head>
 
 <body>
-  <h1 id="">Solar</h1>
 
-  <p>
-  this
+<ul id="instantaneous" class="flex-container">
+</ul>
+
   <p><img src="graph.svg">
 </body>
+<script>
+  let requestURL = 'instantaneous.json';
+  let request = new XMLHttpRequest();
+  request.open('GET', requestURL);
+
+request.responseType = 'json';
+request.send();
+
+request.onload = function() {
+  const inst = request.response;
+  inst.forEach(function(el) {
+    var node = document.createElement("div");
+    node.className = "flex-item";
+
+    var p = document.createElement("p");
+    p.appendChild(document.createTextNode(el[0]));
+    node.appendChild(p);
+
+    p = document.createElement("h2");
+    p.appendChild(document.createTextNode(el[1] + " " + el[2]));
+    node.appendChild(p);
+
+    document.getElementById("instantaneous").appendChild(node);
+  });
+}
+</script>
 </html>
