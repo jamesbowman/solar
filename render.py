@@ -2,7 +2,7 @@ import datetime
 import time
 import svgwrite
 import numpy as np
-from scipy.ndimage import gaussian_filter1d
+# from scipy.ndimage import gaussian_filter1d
 
 def rescale(x, x0, x1, y0 = 0, y1 = 1):
     return y0 + ((x - x0) / (x1 - x0)) * (y1 - y0)
@@ -14,7 +14,8 @@ def ongraph(x, y):
 class Curve:
     def __init__(self, times, dd, d0, d1):
         self.times = times
-        self.dd = list(gaussian_filter1d(np.array(dd), 3))
+        # self.dd = list(gaussian_filter1d(np.array(dd), 3))
+        self.dd = dd
         self.latest = dd[-1]
         self.d0 = d0
         self.d1 = d1
