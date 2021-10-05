@@ -82,7 +82,7 @@ class Curve:
         for (yo,dpt) in [(.5,min(dd)), (-.2,max(dd))]:
             i = list(dd).index(dpt)
             (x, y) = self.gpoint(self.times[i], dd[i])
-            dwg.add(dwg.circle((x, y), r=5, **args))
+            dwg.add(dwg.circle((x, y), r=3, **args))
             s = self.strvalue(dpt)
             dwg.add(dwg.text(s, insert=(x, y+100*yo), font_family="Helvetica", font_size="26pt", text_anchor = "middle"))
         dwg.save()
@@ -119,7 +119,7 @@ class Main_V(Draw, Curve):
     title = "Battery Voltage (V)"
     dir = TSDS + "renogy"
     datum = "Battery Voltage"
-    svgname = "graph_a.svg"
+    svgname = "graph_b.svg"
     dmin = 11.8
     dmax = 14.7
 
@@ -127,11 +127,27 @@ class Main_Power(Draw, Curve):
     title = "Solar Power (W)"
     dir = TSDS + "renogy"
     datum = "Solar Power"
-    svgname = "graph_b.svg"
+    svgname = "graph_c.svg"
     dmin = 0
     dmax = 400
     def strvalue(self, d):
         return f"{d:.0f}"
+
+class Solar_V(Draw, Curve):
+    title = "Solar Voltage (V)"
+    dir = TSDS + "renogy"
+    datum = "Solar Voltage"
+    svgname = "graph_d.svg"
+    dmin = 6
+    dmax = 30
+
+class Coop_Temp(Draw, Curve):
+    title = "Coop Temp (°C)"
+    dir = TSDS + "coop"
+    datum = "temp"
+    svgname = "graph_i.svg"
+    dmin = 6
+    dmax = 30
 
 class Main_Temp(Draw, Curve):
     title = "Battery Temp (°C)"
@@ -149,21 +165,13 @@ class Controller_Temp(Draw, Curve):
     dmin = 6
     dmax = 30
 
-class Solar_V(Draw, Curve):
-    title = "Solar Voltage (V)"
-    dir = TSDS + "renogy"
-    datum = "Solar Voltage"
-    svgname = "graph_d.svg"
-    dmin = 6
-    dmax = 30
-
-class Coop_Temp(Draw, Curve):
-    title = "Coop Temp (°C)"
-    dir = TSDS + "coop"
-    datum = "temp"
-    svgname = "graph_i.svg"
-    dmin = 6
-    dmax = 30
+class TimeStamp(Draw):
+    svgname = "graph_a.svg"
+    def __init__(self):
+        dwg = svgwrite.Drawing(self.svgname, size=(480, 360))
+        s = time.strftime("%H:%M %Z", time.localtime())
+        dwg.add(dwg.text(s, insert=(240, 180), font_family="Helvetica", font_size="50pt", text_anchor = "middle"))
+        dwg.save()
 
 if __name__ == "__main__":
     [(print(c), c()) for c in Draw.__subclasses__()]
