@@ -1,3 +1,3 @@
 To clean up the tsds:
 
-    rm -f `find tsd/ -mmin +1500`
+    find ~/tsd/ -type f -mmin +1500 | xargs rm

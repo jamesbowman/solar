@@ -24,7 +24,7 @@ BATTERY_TYPE = {
 CHARGING_STATE = {
     0: 'deactivated',
     1: 'activated',
-    2: 'mppt',
+    2: 'MPPT',
     3: 'equalizing',
     4: 'boost',
     5: 'floating',
@@ -91,6 +91,12 @@ class RenogyRover(minimalmodbus.Instrument):
         Read the battery voltage
         """
         return self.read_register(0x101, number_of_decimals = 1)
+
+    def battery_current(self):
+        """
+        Read the battery current
+        """
+        return self.read_register(0x102, number_of_decimals = 2)
 
     def battery_temperature(self):
         """
@@ -197,6 +203,9 @@ class RenogyRover(minimalmodbus.Instrument):
         register = self.read_register(0xe004)
         return BATTERY_TYPE.get(register)
 
+    def energy_generation_cumulative(self):
+        return self.read_long(0x11c)
+
     #TODO: resume at 3.10 of spec
 
 if __name__ == "__main__":
@@ -211,6 +220,7 @@ if __name__ == "__main__":
         print('Battery Type: ', rover.battery_type())
         print('Battery Capacity: ', rover.battery_capacity())
         print('Battery Voltage: ', rover.battery_voltage())
+        print('Battery Current: ', rover.battery_current())
         battery_temp = rover.battery_temperature()
         print('Battery Temperature: ', battery_temp, battery_temp * 1.8 + 32)
         controller_temp = rover.controller_temperature()
@@ -228,3 +238,4 @@ if __name__ == "__main__":
         print('Discharging Amp/Hours Today: ', rover.discharging_amp_hours_today())
         print('Minimum Battery Voltage Today: ', rover.battery_min_voltage_today())
         print('Maximum Battery Voltage Today: ', rover.battery_max_voltage_today())
+        print('Cumulative Generation: ', rover.energy_generation_cumulative())

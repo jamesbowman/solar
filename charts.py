@@ -8,8 +8,8 @@ import svgwrite
 import numpy as np
 
 def smooth(ts, h):
-    tt = np.array([t for (t,v) in ts])
-    vv = np.array([v for (t,v) in ts])
+    tt = np.array([t for (t,v) in ts]).astype(np.float)
+    vv = np.array([v for (t,v) in ts]).astype(np.float)
     t0 = min(tt)
     td = max(tt) - t0
     # tt = (tt / (max(tt) - min(tt))) - min(tt)
@@ -21,7 +21,7 @@ def smooth(ts, h):
 
     x = d - adj
     c2 = 2e-4
-    g = np.exp(-(x * x) / (2 * c2))
+    g = np.exp(-(x * x) / (2 * c2)).astype(np.float)
     v = np.tile(vv, h).reshape(sh)
     vg = v * g
     r = vg.sum(1) / g.sum(1)
@@ -51,20 +51,22 @@ class Curve:
     dmin = 999e9
     dmax = -999e9
 
-    def __init__(self):
-        dwg = svgwrite.Drawing(self.svgname, size=(480, 360))
-        dwg.add(dwg.text(self.title, insert=(240, 70), font_family="Helvetica", font_size="33pt", text_anchor = "middle"))
-
+    def db(self):
         t0 = time.time()
         samples = [self.dir + "/" + fn for fn in os.listdir(self.dir) if fn.endswith('.json')]
         def ld(fn):
             with open(fn) as f:
                 return json.load(f)
         db = [ld(fn) for fn in samples]
-        db = [d for d in db if d["t"] > (t0 - 24*60*60)]
-        ts = [(d["t"], d[self.datum]) for d in db]
+        return [d for d in db if d["t"] > (t0 - 24*60*60)]
 
-        (times, dd) = smooth(ts, 160)
+    def __init__(self):
+        dwg = svgwrite.Drawing(self.svgname, size=(480, 360))
+        dwg.add(dwg.text(self.title, insert=(240, 70), font_family="Helvetica", font_size="33pt", text_anchor = "middle"))
+
+        ts = [(d["t"], d[self.datum]) for d in self.db()]
+
+        (times, dd) = smooth(ts, 120)
 
         self.times = times
         self.dd = dd
@@ -80,7 +82,8 @@ class Curve:
 
         dd = self.dd
         for (yo,dpt) in [(.5,min(dd)), (-.2,max(dd))]:
-            i = list(dd).index(dpt)
+            L = list(dd)
+            i = len(L) - L[::-1].index(dpt) - 1
             (x, y) = self.gpoint(self.times[i], dd[i])
             dwg.add(dwg.circle((x, y), r=3, **args))
             s = self.strvalue(dpt)
@@ -115,42 +118,65 @@ class Blankl(Draw, Blank): svgname = "graph_l.svg"
 
 TSDS = "/home/jamesb/tsd/"
 
-class Main_V(Draw, Curve):
-    title = "Battery Voltage (V)"
-    dir = TSDS + "renogy"
-    datum = "Battery Voltage"
-    svgname = "graph_b.svg"
-    dmin = 11.8
-    dmax = 14.7
+def db_renogy():
+    t0 = time.time()
+    samples = [TSDS + "/renogy/" + fn for fn in os.listdir(TSDS + "/renogy/") if fn.endswith('.json')]
+    def ld(fn):
+        with open(fn) as f:
+            return json.load(f)
+    db = [ld(fn) for fn in samples]
+    return [d for d in db if d["t"] > (t0 - 24*60*60)]
+DB_RENOGY = db_renogy()
 
-class Main_Power(Draw, Curve):
+class Renogy_Curve(Curve):
+    def db(self):
+        return DB_RENOGY
+
+class Main_Power(Draw, Renogy_Curve):
     title = "Solar Power (W)"
     dir = TSDS + "renogy"
     datum = "Solar Power"
-    svgname = "graph_c.svg"
+    svgname = "graph_b.svg"
     dmin = 0
     dmax = 400
     def strvalue(self, d):
         return f"{d:.0f}"
 
-class Solar_V(Draw, Curve):
+class Solar_V(Draw, Renogy_Curve):
     title = "Solar Voltage (V)"
     dir = TSDS + "renogy"
     datum = "Solar Voltage"
-    svgname = "graph_d.svg"
+    svgname = "graph_c.svg"
     dmin = 6
     dmax = 30
 
+class Main_V(Draw, Renogy_Curve):
+    title = "Battery Voltage (V)"
+    datum = "Battery Voltage"
+    svgname = "graph_e.svg"
+    dmin = 11.8
+    dmax = 14.7
+
+class main_SOC(Draw, Renogy_Curve):
+    title = "Battery SOC (%)"
+    dir = TSDS + "renogy"
+    datum = "SOC"
+    svgname = "graph_f.svg"
+    dmin = 6
+    dmax = 30
+    def strvalue(self, d):
+        return f"{d:.0f}"
+
 class Coop_Temp(Draw, Curve):
-    title = "Coop Temp (°C)"
+    title = "Coop (°C)"
     dir = TSDS + "coop"
     datum = "temp"
     svgname = "graph_i.svg"
     dmin = 6
     dmax = 30
 
-class Main_Temp(Draw, Curve):
-    title = "Battery Temp (°C)"
+class Main_Temp(Draw, Renogy_Curve):
+    title = "Battery (°C)"
     dir = TSDS + "renogy"
     datum = "Battery Temperature"
     svgname = "graph_j.svg"
@@ -158,12 +184,21 @@ class Main_Temp(Draw, Curve):
     dmax = 30
 
 class Controller_Temp(Draw, Curve):
-    title = "Controller Temp (°C)"
+    title = "Controller (°C)"
     dir = TSDS + "renogy"
     datum = "Controller Temperature"
     svgname = "graph_k.svg"
     dmin = 6
     dmax = 30
+
+class Bedroom_Temp(Draw, Curve):
+    title = "Bedroom (°C)"
+    dir = TSDS + "bedroom"
+    datum = "temp"
+    svgname = "graph_l.svg"
+    dmin = 6
+    dmax = 30
+
 
 class TimeStamp(Draw):
     svgname = "graph_a.svg"
@@ -174,4 +209,4 @@ class TimeStamp(Draw):
         dwg.save()
 
 if __name__ == "__main__":
-    [(print(c), c()) for c in Draw.__subclasses__()]
+    [c() for c in Draw.__subclasses__()]
