@@ -5,7 +5,7 @@ import json
 import numpy as np
 import svgwrite
 
-import numpy as np
+import sunmoon
 
 def smooth(ts, h):
     tt = np.array([t for (t,v) in ts]).astype(np.float)
@@ -205,7 +205,14 @@ class TimeStamp(Draw):
     def __init__(self):
         dwg = svgwrite.Drawing(self.svgname, size=(480, 360))
         s = time.strftime("%H:%M %Z", time.localtime())
-        dwg.add(dwg.text(s, insert=(240, 180), font_family="Helvetica", font_size="50pt", text_anchor = "middle"))
+        dwg.add(dwg.text(s, insert=(240, 100), font_family="Helvetica", font_size="50pt", text_anchor = "middle"))
+        s = sunmoon.sun()
+        for i,k in enumerate(("sunrise", "sunset")):
+            y = 200 + 50 * i
+            dwg.add(dwg.text(k, insert=(140, y), font_family="Helvetica", font_size="26pt"))
+            v = s[k].strftime("%H:%M")
+            dwg.add(dwg.text(v, insert=(280, y), font_family="Helvetica", font_size="26pt"))
+            
         dwg.save()
 
 if __name__ == "__main__":
