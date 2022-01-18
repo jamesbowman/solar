@@ -6,6 +6,7 @@ import numpy as np
 import svgwrite
 
 import sunmoon
+import power
 
 def smooth(ts, h):
     tt = np.array([t for (t,v) in ts]).astype(np.float)
@@ -66,28 +67,29 @@ class Curve:
 
         ts = [(d["t"], d[self.datum]) for d in self.db()]
 
-        (times, dd) = smooth(ts, 120)
+        if ts:
+            (times, dd) = smooth(ts, 120)
 
-        self.times = times
-        self.dd = dd
+            self.times = times
+            self.dd = dd
 
-        self.d0 = min(self.dmin, min(dd))
-        self.d1 = max(self.dmax, max(dd))
-        self.t0 = min(times)
-        self.t1 = max(times)
+            self.d0 = min(self.dmin, min(dd))
+            self.d1 = max(self.dmax, max(dd))
+            self.t0 = min(times)
+            self.t1 = max(times)
 
-        poly = self.points()
-        args = {'stroke':'black', 'fill_opacity':0.0, 'stroke_width':6}
-        dwg.add(dwg.polyline(poly, **args))
+            poly = self.points()
+            args = {'stroke':'black', 'fill_opacity':0.0, 'stroke_width':6}
+            dwg.add(dwg.polyline(poly, **args))
 
-        dd = self.dd
-        for (yo,dpt) in [(.5,min(dd)), (-.2,max(dd))]:
-            L = list(dd)
-            i = len(L) - L[::-1].index(dpt) - 1
-            (x, y) = self.gpoint(self.times[i], dd[i])
-            dwg.add(dwg.circle((x, y), r=3, **args))
-            s = self.strvalue(dpt)
-            dwg.add(dwg.text(s, insert=(x, y+100*yo), font_family="Helvetica", font_size="26pt", text_anchor = "middle"))
+            dd = self.dd
+            for (yo,dpt) in [(.5,min(dd)), (-.2,max(dd))]:
+                L = list(dd)
+                i = len(L) - L[::-1].index(dpt) - 1
+                (x, y) = self.gpoint(self.times[i], dd[i])
+                dwg.add(dwg.circle((x, y), r=3, **args))
+                s = self.strvalue(dpt)
+                dwg.add(dwg.text(s, insert=(x, y+100*yo), font_family="Helvetica", font_size="26pt", text_anchor = "middle"))
         dwg.save()
 
     def strvalue(self, d):
@@ -142,23 +144,32 @@ class Main_Power(Draw, Renogy_Curve):
     def strvalue(self, d):
         return f"{d:.0f}"
 
-class Solar_V(Draw, Renogy_Curve):
-    title = "Solar Voltage (V)"
-    dir = TSDS + "renogy"
-    datum = "Solar Voltage"
-    svgname = "graph_c.svg"
-    dmin = 6
-    dmax = 30
+# class Solar_V(Draw, Renogy_Curve):
+#     title = "Solar Voltage (V)"
+#     dir = TSDS + "renogy"
+#     datum = "Solar Voltage"
+#     svgname = "graph_c.svg"
+#     dmin = 6
+#     dmax = 30
+
+class Grid(Draw, Curve):
+    def db(self):
+        return power.powerlog()
+    datum = "power"
+    title = "Grid Use (W)"
+    svgname = "graph_d.svg"
+    dmin = 0
+    dmax = 800
 
 class Main_V(Draw, Renogy_Curve):
-    title = "Battery Voltage (V)"
+    title = "Main Battery (V)"
     datum = "Battery Voltage"
     svgname = "graph_e.svg"
     dmin = 11.8
     dmax = 14.7
 
 class main_SOC(Draw, Renogy_Curve):
-    title = "Battery SOC (%)"
+    title = "Main SOC (%)"
     dir = TSDS + "renogy"
     datum = "SOC"
     svgname = "graph_f.svg"
@@ -167,32 +178,49 @@ class main_SOC(Draw, Renogy_Curve):
     def strvalue(self, d):
         return f"{d:.0f}"
 
+class Coop_V(Draw, Curve):
+    title = "Coop Battery (V)"
+    dir = TSDS + "coop"
+    datum = "vbatt"
+    svgname = "graph_i.svg"
+    dmin = 11
+    dmax = 15
+
 class Coop_Temp(Draw, Curve):
     title = "Coop (°C)"
     dir = TSDS + "coop"
     datum = "temp"
-    svgname = "graph_i.svg"
-    dmin = 6
-    dmax = 30
-
-class Main_Temp(Draw, Renogy_Curve):
-    title = "Battery (°C)"
-    dir = TSDS + "renogy"
-    datum = "Battery Temperature"
     svgname = "graph_j.svg"
     dmin = 6
     dmax = 30
 
-class Controller_Temp(Draw, Curve):
-    title = "Controller (°C)"
+if 1:
+    class Coop_Door(Draw, Curve):
+        title = "Coop Door"
+        dir = TSDS + "coop"
+        datum = "dooropen"
+        svgname = "graph_h.svg"
+        dmin = 0
+        dmax = 1
+
+class Main_Temp(Draw, Renogy_Curve):
+    title = "Shed (°C)"
     dir = TSDS + "renogy"
-    datum = "Controller Temperature"
+    datum = "Battery Temperature"
     svgname = "graph_k.svg"
     dmin = 6
     dmax = 30
 
-class Bedroom_Temp(Draw, Curve):
-    title = "Bedroom (°C)"
+# class Controller_Temp(Draw, Curve):
+#     title = "Controller (°C)"
+#     dir = TSDS + "renogy"
+#     datum = "Controller Temperature"
+#     svgname = "graph_k.svg"
+#     dmin = 6
+#     dmax = 30
+
+class Upstairs_Temp(Draw, Curve):
+    title = "Upstairs (°C)"
     dir = TSDS + "bedroom"
     datum = "temp"
     svgname = "graph_l.svg"
@@ -207,7 +235,7 @@ class TimeStamp(Draw):
         s = time.strftime("%H:%M %Z", time.localtime())
         dwg.add(dwg.text(s, insert=(240, 100), font_family="Helvetica", font_size="50pt", text_anchor = "middle"))
         s = sunmoon.sun()
-        for i,k in enumerate(("sunrise", "sunset")):
+        for i,k in enumerate(("dawn", "dusk")):
             y = 200 + 50 * i
             dwg.add(dwg.text(k, insert=(140, y), font_family="Helvetica", font_size="26pt"))
             v = s[k].strftime("%H:%M")
@@ -216,4 +244,4 @@ class TimeStamp(Draw):
         dwg.save()
 
 if __name__ == "__main__":
-    [c() for c in Draw.__subclasses__()]
+    [(print(c), c()) for c in Draw.__subclasses__()]

@@ -1,8 +1,10 @@
 # python battery.py
-# python renogy_rover.py
-# cp index.html style.css *.svg /var/www/html
+# python power.py ; exit
+# ./instant ; exit
+time ./docharts ; exit
+time python render.py
+exit
 
-python render.py
 
 CUR_WID=$(xdotool getwindowfocus)
 for WID in $(xdotool search --onlyvisible --name 'Solar - Google Chrome')

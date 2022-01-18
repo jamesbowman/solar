@@ -1,0 +1,9 @@
+#!/bin/bash
+
+while true
+do
+  ./docharts
+  scp html/panel_1920_n.png tk:files/
+  find ~/tsd/ -type f -mmin +1500 | xargs rm
+  sleep 30
+done

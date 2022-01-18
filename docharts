@@ -2,5 +2,10 @@ set -e
 
 python charts.py
 # inkview graph_?.svg
-montage graph_?.svg -geometry 480x360 -tile 4x3 panel_1920_p.png
-convert panel_1920_p.png -negate panel_1920_n.png
+
+montage graph_?.svg -geometry 480x360 -tile 4x3 p.png
+convert p.png -negate n.png
+
+mv p.png panel_1920_p.png
+mv n.png panel_1920_n.png
+cp panel*png html/

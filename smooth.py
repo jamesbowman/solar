@@ -3,9 +3,10 @@ import numpy as np
 def smooth(ts, h):
     tt = np.array([t for (t,v) in ts])
     vv = np.array([v for (t,v) in ts])
+    # return (tt, vv)
     t0 = min(tt)
     td = max(tt) - t0
-    tt = (tt / (max(tt) - min(tt))) - min(tt)
+    tt = (tt - t0) / td
     w = len(tt)
     sh = (h, w)
     d = np.tile(tt, h).reshape(sh)
@@ -15,7 +16,7 @@ def smooth(ts, h):
     # print(d - adj)
 
     x = d - adj
-    c2 = .015
+    c2 = 9e-6
     g = np.exp(-(x * x) / (2 * c2))
     v = np.tile(vv, h).reshape(sh)
     vg = v * g
