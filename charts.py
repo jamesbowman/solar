@@ -1,4 +1,5 @@
 import time
+import math
 import os
 import json
 
@@ -9,8 +10,8 @@ import sunmoon
 import power
 
 def smooth(ts, h):
-    tt = np.array([t for (t,v) in ts]).astype(np.float)
-    vv = np.array([v for (t,v) in ts]).astype(np.float)
+    tt = np.array([t for (t,v) in ts]).astype(float)
+    vv = np.array([v for (t,v) in ts]).astype(float)
     t0 = min(tt)
     td = max(tt) - t0
     # tt = (tt / (max(tt) - min(tt))) - min(tt)
@@ -22,7 +23,7 @@ def smooth(ts, h):
 
     x = d - adj
     c2 = 2e-4
-    g = np.exp(-(x * x) / (2 * c2)).astype(np.float)
+    g = np.exp(-(x * x) / (2 * c2)).astype(float)
     v = np.tile(vv, h).reshape(sh)
     vg = v * g
     r = vg.sum(1) / g.sum(1)
@@ -69,27 +70,27 @@ class Curve:
 
         if ts:
             (times, dd) = smooth(ts, 120)
+            if not any(np.isnan(dd)):
+                self.times = times
+                self.dd = dd
 
-            self.times = times
-            self.dd = dd
+                self.d0 = min(self.dmin, min(dd))
+                self.d1 = max(self.dmax, max(dd))
+                self.t0 = min(times)
+                self.t1 = max(times)
 
-            self.d0 = min(self.dmin, min(dd))
-            self.d1 = max(self.dmax, max(dd))
-            self.t0 = min(times)
-            self.t1 = max(times)
+                poly = self.points()
+                args = {'stroke':'black', 'fill_opacity':0.0, 'stroke_width':6}
+                dwg.add(dwg.polyline(poly, **args))
 
-            poly = self.points()
-            args = {'stroke':'black', 'fill_opacity':0.0, 'stroke_width':6}
-            dwg.add(dwg.polyline(poly, **args))
-
-            dd = self.dd
-            for (yo,dpt) in [(.5,min(dd)), (-.2,max(dd))]:
-                L = list(dd)
-                i = len(L) - L[::-1].index(dpt) - 1
-                (x, y) = self.gpoint(self.times[i], dd[i])
-                dwg.add(dwg.circle((x, y), r=3, **args))
-                s = self.strvalue(dpt)
-                dwg.add(dwg.text(s, insert=(x, y+100*yo), font_family="Helvetica", font_size="26pt", text_anchor = "middle"))
+                dd = self.dd
+                for (yo,dpt) in [(.5,min(dd)), (-.2,max(dd))]:
+                    L = list(dd)
+                    i = len(L) - L[::-1].index(dpt) - 1
+                    (x, y) = self.gpoint(self.times[i], dd[i])
+                    dwg.add(dwg.circle((x, y), r=3, **args))
+                    s = self.strvalue(dpt)
+                    dwg.add(dwg.text(s, insert=(x, y+100*yo), font_family="Helvetica", font_size="26pt", text_anchor = "middle"))
         dwg.save()
 
     def strvalue(self, d):
@@ -227,6 +228,14 @@ class Upstairs_Temp(Draw, Curve):
     dmin = 6
     dmax = 30
 
+if 1:
+    class Pressure(Draw, Curve):
+        title = "Pressure (hPa)"
+        dir = TSDS + "bedroom"
+        datum = "pressure"
+        svgname = "graph_g.svg"
+        dmin = 1010
+        dmax = 1030
 
 class TimeStamp(Draw):
     svgname = "graph_a.svg"
