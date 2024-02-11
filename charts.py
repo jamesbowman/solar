@@ -4,9 +4,19 @@ import os
 import json
 
 import numpy as np
+from scipy.ndimage import gaussian_filter
 import svgwrite
+import cairo
+import gi
+gi.require_version('Pango', '1.0')
+gi.require_version('PangoCairo', '1.0')
+from gi.repository import Pango, PangoCairo
 
+from PIL import Image, ImageDraw, ImageFont, ImageChops
+
+import rt
 import sunmoon
+from sunalt import solar_elevations
 import power
 
 def smooth(ts, h):
@@ -93,6 +103,23 @@ class Curve:
                     dwg.add(dwg.text(s, insert=(x, y+100*yo), font_family="Helvetica", font_size="26pt", text_anchor = "middle"))
         dwg.save()
 
+    def curve(self):
+        ts = [(d["t"], d[self.datum]) for d in self.db()]
+
+        if ts:
+            (times, dd) = smooth(ts, 120)
+
+            self.times = times
+            self.dd = dd
+
+            self.d0 = min(self.dmin, min(dd))
+            self.d1 = max(self.dmax, max(dd))
+            self.t0 = min(times)
+            self.t1 = max(times)
+
+            poly = self.points()
+            return poly
+
     def strvalue(self, d):
         return f"{d:.1f}"
 
@@ -121,15 +148,16 @@ class Blankl(Draw, Blank): svgname = "graph_l.svg"
 
 TSDS = "/home/jamesb/tsd/"
 
-def db_renogy():
-    t0 = time.time()
-    samples = [TSDS + "/renogy/" + fn for fn in os.listdir(TSDS + "/renogy/") if fn.endswith('.json')]
-    def ld(fn):
-        with open(fn) as f:
-            return json.load(f)
-    db = [ld(fn) for fn in samples]
-    return [d for d in db if d["t"] > (t0 - 24*60*60)]
-DB_RENOGY = db_renogy()
+if 0:
+    def db_renogy():
+        t0 = time.time()
+        samples = [TSDS + "/renogy/" + fn for fn in os.listdir(TSDS + "/renogy/") if fn.endswith('.json')]
+        def ld(fn):
+            with open(fn) as f:
+                return json.load(f)
+        db = [ld(fn) for fn in samples]
+        return [d for d in db if d["t"] > (t0 - 24*60*60)]
+    DB_RENOGY = db_renogy()
 
 class Renogy_Curve(Curve):
     def db(self):
@@ -252,5 +280,122 @@ class TimeStamp(Draw):
             
         dwg.save()
 
+class CairoSurface:
+    def __init__(self, width, height):
+        self.width = width
+        self.height = height
+        self.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+        self.ctx = cairo.Context(self.surface)
+
+    def asarray(self):
+        r = np.ndarray(shape=(self.height, self.width, 4), dtype=np.uint8, buffer=self.surface.get_data())
+        return r[:, :, :3] / 255
+
+def gauss(ni, sigma):
+    filtered_r = gaussian_filter(ni[:, :, 0], sigma=sigma)
+    filtered_g = gaussian_filter(ni[:, :, 1], sigma=sigma)
+    filtered_b = gaussian_filter(ni[:, :, 2], sigma=sigma)
+    return np.stack([filtered_r, filtered_g, filtered_b], axis=2)
+
+class Silly(Curve):
+    title = "Upstairs (°C)"
+    dir = TSDS + "bedroom"
+    datum = "temp"
+    dmin = 6
+    dmax = 30
+
+    def __init__(self):
+        
+        # Set up the image dimensions
+        width, height = 480, 360
+
+        surface = CairoSurface(width, height)
+        ctx = surface.ctx
+
+        ctx.set_source_rgb(1, 1, 1)  # White
+        ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+        ctx.set_line_cap(cairo.LINE_CAP_ROUND)
+        ctx.set_line_width(5)
+
+        cc = self.curve()
+        ctx.move_to(*cc[0])
+        for p in cc[1:]:
+            ctx.line_to(*p)
+        ctx.stroke()
+
+        labels = []
+        dd = self.dd
+        for (yo,dpt) in [(.2,min(dd)), (-.3,max(dd))]:
+            L = list(dd)
+            i = len(L) - L[::-1].index(dpt) - 1
+            (x, y) = self.gpoint(self.times[i], dd[i])
+            # dwg.add(dwg.circle((x, y), r=3, **args))
+            print(x, y)
+            ctx.arc(x, y, 6, 0, 2 * 3.14159)
+            ctx.fill()
+            s = self.strvalue(dpt)
+            # dwg.add(dwg.text(s, insert=(x, y+100*yo), font_family="Helvetica", font_size="26pt", text_anchor = "middle"))
+            labels.append((s, x, y+100*yo))
+
+        l_line = surface.asarray()
+
+        surface = CairoSurface(width, height)
+        ctx = surface.ctx
+
+
+        sa = solar_elevations()
+
+        ctx.set_line_width(3)
+        for (i, e) in enumerate(sa):
+            x = rescale(i, 0, len(sa), X0, X1)
+            y = Y0
+            print(x, y)
+            if e > 10:
+                ctx.set_source_rgb(0, rescale(e, 0, 45, .3, 1), 1)
+                # ctx.arc(x, y, 20, 0, 2 * 3.14159)
+                ctx.move_to(x, Y0)
+                ctx.line_to(x, Y1)
+                ctx.stroke()
+
+        l_sunalt = gauss(surface.asarray() * 0.3, 6)
+
+        if 1:
+            fn = "IBMPlexSans-Medium.otf"
+            im = Image.new("RGB", (width, height))
+            draw = ImageDraw.Draw(im)
+            font = ImageFont.truetype(fn, 40)
+
+            text = self.title
+            def center(s, x, y, font):
+                bbox = draw.textbbox((0, 0), s, font=font)
+                text_width = bbox[2] - bbox[0]
+                text_height = bbox[3] - bbox[1]
+                x = x - (text_width) / 2
+                y = y - (text_height) / 2
+
+                # Draw text onto the image (0 for black text)
+                draw.text((x, y), s, fill=(255,255,255), font=font)
+
+            center(self.title, width / 2, 50, font)
+            font = ImageFont.truetype(fn, 20)
+            for (s, x, y) in labels:
+                center(s, x, y, font)
+
+            l_text = np.array(im) / 255
+
+        l_bg = rt.glow()
+
+        l_glow = gaussian_filter(l_text + l_line, sigma=12)
+
+        final = (1.0 * l_bg +
+                 1.0 * l_sunalt +
+                 0.4 * l_glow +
+                 0.7 * l_text +
+                 0.7 * l_line 
+                 )
+        final = np.minimum(255, np.maximum(final * 255, 0)).astype(np.uint8)
+        Image.fromarray(final).save('out.png')
+
 if __name__ == "__main__":
-    [(print(c), c()) for c in Draw.__subclasses__()]
+    # [(print(c), c()) for c in Draw.__subclasses__()]
+    Silly()
