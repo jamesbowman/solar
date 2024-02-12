@@ -17,7 +17,7 @@ body{
     line-height:1.2
   }
   img {
-    background:#eee;
+    // background:#eee;
   }
 }
 @media (prefers-color-scheme: dark) {
@@ -55,7 +55,7 @@ body{
 
 .flex-item {
   // background: tomato;
-  background: #eee;
+  // background: #f0f0f0;
   padding: 5px;
   width: 150px;
   margin-top: 10px;
@@ -87,32 +87,48 @@ body{
 <ul id="instantaneous" class="flex-container">
 </ul>
 
-  <p><img src="graph.svg">
+  <p><img id="maingraph" src="graph.svg">
 </body>
 <script>
+function update_stats() {
   let requestURL = 'instantaneous.json';
   let request = new XMLHttpRequest();
   request.open('GET', requestURL);
 
-request.responseType = 'json';
-request.send();
+  request.responseType = 'json';
+  request.send();
 
-request.onload = function() {
-  const inst = request.response;
-  inst.forEach(function(el) {
-    var node = document.createElement("div");
-    node.className = "flex-item";
+  request.onload = function() {
+    var instdiv = document.getElementById("instantaneous")
+    while (instdiv.firstChild) {
+      instdiv.removeChild(instdiv.firstChild);
+    }
+    const inst = request.response;
+    inst.forEach(function(el) {
+      var node = document.createElement("div");
+      node.className = "flex-item";
 
-    var p = document.createElement("p");
-    p.appendChild(document.createTextNode(el[0]));
-    node.appendChild(p);
+      var p = document.createElement("p");
+      p.appendChild(document.createTextNode(el[0]));
+      node.appendChild(p);
 
-    p = document.createElement("h2");
-    p.appendChild(document.createTextNode(el[1] + " " + el[2]));
-    node.appendChild(p);
+      p = document.createElement("h2");
+      p.appendChild(document.createTextNode(el[1] + " " + el[2]));
+      node.appendChild(p);
 
-    document.getElementById("instantaneous").appendChild(node);
-  });
+      instdiv.appendChild(node);
+    });
+  }
 }
+
+update_stats();
+
+window.setInterval(function()
+{
+  document.getElementById('maingraph').src = "graph.svg?random="+new Date().getTime();
+  update_stats();
+  console.log('tick');
+}, 30 * 1000);
+
 </script>
 </html>

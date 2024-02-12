@@ -3,7 +3,7 @@
 while true
 do
   ./docharts
-  scp html/panel_1920_n.png tk:files/
+  scp html/panel_1920_n.png html/coop.png excamera.com:excamera/public/files/
   find ~/tsd/ -type f -mmin +1500 | xargs rm
   sleep 30
 done

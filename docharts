@@ -6,6 +6,8 @@ python charts.py
 montage graph_?.svg -geometry 480x360 -tile 4x3 p.png
 convert p.png -negate n.png
 
+montage graph_{a,h,i,j}.svg -geometry 480x360 -tile 2x2 html/coop.png
+
 mv p.png panel_1920_p.png
 mv n.png panel_1920_n.png
 cp panel*png html/
