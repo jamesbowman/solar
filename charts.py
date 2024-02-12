@@ -4,7 +4,7 @@ import os
 import json
 
 import numpy as np
-from scipy.ndimage import gaussian_filter
+# from scipy.ndimage import gaussian_filter
 import svgwrite
 import cairo
 import gi
@@ -175,6 +175,7 @@ class CairoSurface:
         return r[:, :, :3] / 255
 
 def gauss(ni, sigma):
+    return ni
     filtered_r = gaussian_filter(ni[:, :, 0], sigma=sigma)
     filtered_g = gaussian_filter(ni[:, :, 1], sigma=sigma)
     filtered_b = gaussian_filter(ni[:, :, 2], sigma=sigma)
@@ -272,11 +273,11 @@ class Tile:
 
             l_text = np.array(im) / 255
 
-        l_glow = gaussian_filter(l_text + l_line, sigma=12)
+        # l_glow = gaussian_filter(l_text + l_line, sigma=12)
 
         final = (
                  l_sunalt +
-                 0.4 * l_glow +
+                 # 0.4 * l_glow +
                  1.0 * l_text +
                  1.0 * l_line 
                  )
