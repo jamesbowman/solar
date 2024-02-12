@@ -1,9 +1,19 @@
 #!/bin/bash
 
+set -e
+
+mkdir -p ~/tsd/shelly30
+
 while true
 do
+  (
+  F=$(date +%s).json
+
+  curl -s http://192.168.12.30/rpc/Shelly.GetStatus > $$.tmp
+  mv $$.tmp ~/tsd/shelly30/$F
+  )
+
   ./docharts
-  scp html/panel_1920_n.png html/coop.png excamera.com:excamera/public/files/
   find ~/tsd/ -type f -mmin +1500 | xargs rm
   sleep 30
 done
