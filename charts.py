@@ -4,13 +4,9 @@ import os
 import json
 
 import numpy as np
-# from scipy.ndimage import gaussian_filter
+from scipy.ndimage import gaussian_filter
 import svgwrite
 import cairo
-import gi
-gi.require_version('Pango', '1.0')
-gi.require_version('PangoCairo', '1.0')
-from gi.repository import Pango, PangoCairo
 
 from PIL import Image, ImageDraw, ImageFont, ImageChops
 
@@ -175,7 +171,6 @@ class CairoSurface:
         return r[:, :, :3] / 255
 
 def gauss(ni, sigma):
-    return ni
     filtered_r = gaussian_filter(ni[:, :, 0], sigma=sigma)
     filtered_g = gaussian_filter(ni[:, :, 1], sigma=sigma)
     filtered_b = gaussian_filter(ni[:, :, 2], sigma=sigma)
@@ -249,16 +244,17 @@ class Tile:
             ctx.stroke()
 
             dd = self.dd
-            for (yo,dpt) in [(.2,min(dd)), (-.3,max(dd))]:
-                L = list(dd)
-                i = len(L) - L[::-1].index(dpt) - 1
-                (x, y) = self.gpoint(self.times[i], dd[i])
-                # dwg.add(dwg.circle((x, y), r=3, **args))
-                ctx.arc(x, y, 6, 0, 2 * 3.14159)
-                ctx.fill()
-                s = self.strvalue(dpt)
-                # dwg.add(dwg.text(s, insert=(x, y+100*yo), font_family="Helvetica", font_size="26pt", text_anchor = "middle"))
-                labels.append((s, x, y+100*yo))
+            if not any(np.isnan(dd)):
+                for (yo,dpt) in [(.2,min(dd)), (-.3,max(dd))]:
+                    L = list(dd)
+                    i = len(L) - L[::-1].index(dpt) - 1
+                    (x, y) = self.gpoint(self.times[i], dd[i])
+                    # dwg.add(dwg.circle((x, y), r=3, **args))
+                    ctx.arc(x, y, 6, 0, 2 * 3.14159)
+                    ctx.fill()
+                    s = self.strvalue(dpt)
+                    # dwg.add(dwg.text(s, insert=(x, y+100*yo), font_family="Helvetica", font_size="26pt", text_anchor = "middle"))
+                    labels.append((s, x, y+100*yo))
 
         l_line = surface.asarray()
 
@@ -345,6 +341,12 @@ class Coop_Temp(Draw, Curve):
     svgname = "graph_j.svg"
     dmin = 6
     dmax = 30
+
+class Inverter(Tile, Curve):
+    title = "Inverter (W)"
+    dir = TSDS + "shelly30"
+    datum = "temp"
+    pos = (2, 0)
 
 if 1:
     class Coop_Door(Draw, Curve):
