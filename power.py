@@ -4,7 +4,7 @@ def powerlog():
     db = []
     t0 = time.time()
     for fn in ("power.log.1", "power.log"):
-        with open("/var/log/nginx/" + fn) as f:
+        with open("/home/jamesb/tsd/" + fn) as f:
             for l in f:
                 fields = l.split()
                 if len(fields) == 5:

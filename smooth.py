@@ -1,11 +1,10 @@
 import numpy as np
 
-def smooth(ts, h):
+def smooth(ts, h, t0, t1):
     tt = np.array([t for (t,v) in ts])
     vv = np.array([v for (t,v) in ts])
     # return (tt, vv)
-    t0 = min(tt)
-    td = max(tt) - t0
+    td = t1 - t0
     tt = (tt - t0) / td
     w = len(tt)
     sh = (h, w)
