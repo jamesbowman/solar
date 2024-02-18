@@ -209,11 +209,6 @@ def center(draw, s, x, y, font):
     draw.text((x, y), s, fill=(255,255,255), font=font)
 
 class Tile:
-    title = "Upstairs (°C)"
-    dir = TSDS + "bedroom"
-    datum = "temp"
-    dmin = 6
-    dmax = 30
 
     def __init__(self):
         
@@ -354,7 +349,7 @@ class Inverter(Tile, Curve):
     def get_datum(self, d):
         return d["switch:0"]["apower"]
     dmin = 0
-    dmax = 200
+    dmax = 80
 
 class Coop_Door(Tile, Curve):
     title = "Coop Door"
@@ -418,7 +413,16 @@ class TimeStamp(Tile):
             center(draw, k, 240 - 100, y, font1)
             v = s[k].strftime("%H:%M")
             center(draw, v, 240 + 100, y, font1)
-        self.im = im
+        l_text = np.array(im) / 255
+
+        l_glow = gaussian_filter(l_text, sigma=12)
+
+        final = (0.2 * np.array((.0, .3, 1)) * rt.glow(0.45) +
+                 0.5 * l_glow +
+                 1.0 * l_text
+                 )
+        final = np.minimum(255, np.maximum(final * 255, 0)).astype(np.uint8)
+        self.im = Image.fromarray(final)
 
 if __name__ == "__main__":
     if 0:
@@ -429,6 +433,5 @@ if __name__ == "__main__":
     final = Image.new("RGB", (1920, 1080))
     tiles = [tc() for tc in Tile.__subclasses__()]
     for t in tiles:
-        print(t.title,  (480 * t.pos[0], 360 * t.pos[1]))
         final.paste(t.im, (480 * t.pos[0], 360 * t.pos[1]))
     final.save("out.png")
