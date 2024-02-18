@@ -359,7 +359,7 @@ class Coop_Door(Tile, Curve):
     dmin = 0
     dmax = 1
     def strvalue(self, d):
-        return ["closed", "open"][int(d)]
+        return ["closed", "open"][int(round(d))]
 
 class Main_Temp(Tile, Renogy_Curve):
     title = "Shed (°C)"
