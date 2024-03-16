@@ -4,6 +4,9 @@ import json
 from renogy_rover import RenogyRover
 from render import redraw
 
+def MJ(wh):
+    return round(wh * 3600 / 1e6, 1)
+
 if __name__ == "__main__":
     portname="/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A9GIWNYB-if00-port0"
     rover = RenogyRover(portname, 1)
@@ -59,8 +62,8 @@ if __name__ == "__main__":
                 ('Load Current',                          rover.load_current(),                'A'),
                 ('Load Power',                            rover.load_power(),                  'W'),
 
-                ('Energy Generated Today',                rover.energy_generation_today(),     'Wh'),
-                ('Energy Consumed Today',                 rover.energy_consumption_today(),    'Wh'),
+                ('Energy Generated Today',                MJ(rover.energy_generation_today()), 'MJ'),
+                ('Energy Consumed Today',                 MJ(rover.energy_consumption_today()),'MJ'),
                 ('Charging Today',                        rover.charging_amp_hours_today(),    'Ah'),
                 ('Discharging Today',                     rover.discharging_amp_hours_today(), 'Ah'),
                 ('Battery Minimum Today',                 rover.battery_min_voltage_today(),   'V'),
