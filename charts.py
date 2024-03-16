@@ -262,6 +262,7 @@ class Tile:
             draw = ImageDraw.Draw(im)
 
             center(draw, self.title, width / 2, 50, font1)
+            center(draw, self.subtitle(), width / 2, 90, font2)
             for (s, x, y) in labels:
                 center(draw, s, x, y, font2)
 
@@ -278,7 +279,16 @@ class Tile:
         final = np.minimum(255, np.maximum(final * 255, 0)).astype(np.uint8)
         self.im = Image.fromarray(final)
 
-class Main_Power(Tile, Renogy_Curve):
+    def subtitle(self):
+        return ""
+
+class ReportMJ:
+    def subtitle(self):
+        avg_w = np.mean(self.valid())
+        mj = 24 * 3600 * avg_w / 1e6
+        return f"{mj:.1f} MJ"
+
+class Main_Power(ReportMJ, Tile, Renogy_Curve):
     title = "Solar Power (W)"
     dir = TSDS + "renogy"
     datum = "Solar Power"
@@ -297,7 +307,7 @@ class Main_Power(Tile, Renogy_Curve):
 #     dmax = 30
 
 if 1:
-    class Grid(Tile, Curve):
+    class Grid(ReportMJ, Tile, Curve):
         def db(self):
             return power.powerlog()
         datum = "power"
@@ -340,7 +350,7 @@ class Coop_Temp(Tile, Curve):
     dmin = 6
     dmax = 30
 
-class Inverter(Tile, Curve):
+class Inverter(ReportMJ, Tile, Curve):
     title = "Inverter (W)"
     dir = TSDS + "shelly30"
     pos = (2, 0)
