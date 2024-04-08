@@ -100,6 +100,7 @@ class Curve:
     def db(self):
         t0 = time.time()
         samples = [self.dir + "/" + fn for fn in os.listdir(self.dir) if fn.endswith('.json')]
+        samples = [fn for fn in samples if os.path.getsize(fn)]
         def ld(fn):
             with open(fn) as f:
                 return json.load(f)
@@ -127,6 +128,11 @@ class Curve:
 
             poly = self.points()
             return poly
+        else:
+            self.times = []
+            self.quality = []
+            self.dd = []
+
 
     def valid(self):
         vq = zip(self.dd, self.quality)
