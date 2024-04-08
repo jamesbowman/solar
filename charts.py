@@ -315,14 +315,22 @@ class Inverter(ReportMJ, Tile, Curve):
     dmin = 0
     dmax = 200
 
-class Grid(ReportMJ, Tile, Curve):
-    def db(self):
-        return power.powerlog()
-    datum = "power"
-    title = "Grid Use (W)"
-    pos = (3, 0)
-    dmin = 0
-    dmax = 200
+if 0:
+    class Grid(ReportMJ, Tile, Curve):
+        def db(self):
+            return power.powerlog()
+        datum = "power"
+        title = "Grid Use (W)"
+        pos = (3, 0)
+        dmin = 0
+        dmax = 200
+else:
+    class Solar_V(Tile, Renogy_Curve):
+        title = "Solar Voltage (V)"
+        datum = "Solar Voltage"
+        pos = (3, 0)
+        dmin = 0
+        dmax = 25
 
 class Main_V(Tile, Renogy_Curve):
     title = "Main Battery (V)"
