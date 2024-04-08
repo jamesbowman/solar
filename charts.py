@@ -298,23 +298,25 @@ class Main_Power(ReportMJ, Tile, Renogy_Curve):
     def strvalue(self, d):
         return f"{d:.0f}"
 
-# class Solar_V(Draw, Renogy_Curve):
-#     title = "Solar Voltage (V)"
-#     dir = TSDS + "renogy"
-#     datum = "Solar Voltage"
-#     svgname = "graph_c.svg"
-#     dmin = 6
-#     dmax = 30
+class Inverter(ReportMJ, Tile, Curve):
+    title = "Inverter (W)"
+    dir = TSDS + "shelly30"
+    pos = (2, 0)
+    def ts(self, d):
+        return d["sys"]["unixtime"]
+    def get_datum(self, d):
+        return d["switch:0"]["apower"]
+    dmin = 0
+    dmax = 200
 
-if 1:
-    class Grid(ReportMJ, Tile, Curve):
-        def db(self):
-            return power.powerlog()
-        datum = "power"
-        title = "Grid Use (W)"
-        pos = (3, 0)
-        dmin = 0
-        dmax = 800
+class Grid(ReportMJ, Tile, Curve):
+    def db(self):
+        return power.powerlog()
+    datum = "power"
+    title = "Grid Use (W)"
+    pos = (3, 0)
+    dmin = 0
+    dmax = 200
 
 class Main_V(Tile, Renogy_Curve):
     title = "Main Battery (V)"
@@ -349,17 +351,6 @@ class Coop_Temp(Tile, Curve):
     pos = (1, 2)
     dmin = 6
     dmax = 30
-
-class Inverter(ReportMJ, Tile, Curve):
-    title = "Inverter (W)"
-    dir = TSDS + "shelly30"
-    pos = (2, 0)
-    def ts(self, d):
-        return d["sys"]["unixtime"]
-    def get_datum(self, d):
-        return d["switch:0"]["apower"]
-    dmin = 0
-    dmax = 80
 
 class Coop_Door(Tile, Curve):
     title = "Coop Door"
