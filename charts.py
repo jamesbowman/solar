@@ -433,9 +433,9 @@ if 1:
 
             l_glow = gaussian_filter(l_text, sigma=12)
 
-            map = np.array(Image.open("2400x2400.jpg").crop((440, 1058, 440 + 480, 1058 + 360)))
+            map = np.array(Image.open("2400x2400.jpg").crop((440, 1058, 440 + 480, 1058 + 360))) / 255.0
 
-            final = ((map/255) * np.array((.7, .7, 1)) * rt.glow(0.40) +
+            final = (map * np.array((.8, .8, 1)) * rt.glow(0.40) +
                      0.5 * l_glow +
                      1.0 * l_text
                      )
