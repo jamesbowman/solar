@@ -412,32 +412,42 @@ class Pressure(Tile, Curve):
     def strvalue(self, d):
         return f"{d:.0f}"
 
-class TimeStamp(Tile):
-    pos = (0, 0)
-    def __init__(self):
-        (width, height) = (480, 360)
-        im = Image.new("RGB", (width, height))
-        draw = ImageDraw.Draw(im)
+if 1:
+    class TimeStamp(Tile):
+        pos = (0, 0)
+        def __init__(self):
+            (width, height) = (480, 360)
+            im = Image.new("RGB", (width, height))
+            draw = ImageDraw.Draw(im)
 
-        s = time.strftime("%H:%M %Z", time.localtime())
-        center(draw, s, width / 2, 50, font1)
+            s = time.strftime("%H:%M %Z", time.localtime())
+            center(draw, s, width / 2, 50, font1)
 
-        s = sunmoon.sun()
-        for i,k in enumerate(("dawn", "dusk")):
-            y = 150 + 50 * i
-            center(draw, k, 240 - 100, y, font1)
-            v = s[k].strftime("%H:%M")
-            center(draw, v, 240 + 100, y, font1)
-        l_text = np.array(im) / 255
+            s = sunmoon.sun()
+            for i,k in enumerate(("dawn", "dusk")):
+                y = 150 + 50 * i
+                center(draw, k, 240 - 100, y, font2)
+                v = s[k].strftime("%H:%M")
+                center(draw, v, 240 + 100, y, font2)
+            l_text = np.array(im) / 255
 
-        l_glow = gaussian_filter(l_text, sigma=12)
+            l_glow = gaussian_filter(l_text, sigma=12)
 
-        final = (0.2 * np.array((.0, .3, 1)) * rt.glow(0.45) +
-                 0.5 * l_glow +
-                 1.0 * l_text
-                 )
-        final = np.minimum(255, np.maximum(final * 255, 0)).astype(np.uint8)
-        self.im = Image.fromarray(final)
+            map = np.array(Image.open("2400x2400.jpg").crop((440, 1058, 440 + 480, 1058 + 360)))
+
+            final = ((map/255) * np.array((.7, .7, 1)) * rt.glow(0.40) +
+                     0.5 * l_glow +
+                     1.0 * l_text
+                     )
+            final = np.minimum(255, np.maximum(final * 255, 0)).astype(np.uint8)
+            self.im = Image.fromarray(final)
+else:
+    class TimeStamp(Tile):
+        pos = (0, 0)
+        def __init__(self):
+            map = np.array(Image.open("2400x2400.jpg").crop((440, 1058, 440 + 480, 1058 + 360)))
+            final = (map * np.array((1, 1, 1)) * rt.glow(0.50)).astype(np.uint8)
+            self.im = Image.fromarray(final)
 
 if __name__ == "__main__":
     if 0:
