@@ -149,8 +149,12 @@ if 1:
         samples = [TSDS + "/renogy/" + fn for fn in os.listdir(TSDS + "/renogy/") if fn.endswith('.json')]
         def ld(fn):
             with open(fn) as f:
-                return json.load(f)
+                try:
+                    return json.load(f)
+                except json.decoder.JSONDecodeError:
+                    return None
         db = [ld(fn) for fn in samples]
+        db = [x for x in db if x is not None]
         return [d for d in db if d["t"] > (t0 - 24*60*60)]
     DB_RENOGY = db_renogy()
 
