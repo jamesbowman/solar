@@ -428,11 +428,12 @@ if 1:
             center(draw, s, width / 2, 50, font1)
 
             s = sunmoon.sun()
-            for i,k in enumerate(("dawn", "dusk")):
-                y = 150 + 50 * i
-                center(draw, k, 240 - 100, y, font2)
+            W = 300
+            for i,k in enumerate(("dawn", "noon", "dusk")):
+                x = ((480 - W) // 2) + i * W // 2
+                center(draw, k, x, 280, font2)
                 v = s[k].strftime("%H:%M")
-                center(draw, v, 240 + 100, y, font2)
+                center(draw, v, x, 320, font2)
             l_text = np.array(im) / 255
 
             l_glow = gaussian_filter(l_text, sigma=12)
