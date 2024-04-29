@@ -345,9 +345,10 @@ else:
         dmin = 6
         dmax = 30
 
-class Main_V(Tile, Renogy_Curve):
+class Main_V(Tile, Curve):
     title = "Main Battery (V)"
-    datum = "Battery Voltage"
+    dir = TSDS + "sungauge40"
+    datum = "voltage"
     pos = (0, 1)
     dmin = 11.8
     dmax = 14.7
