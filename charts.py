@@ -380,10 +380,10 @@ class Coop_Door(Tile, Curve):
     def strvalue(self, d):
         return ["closed", "open"][int(round(d))]
 
-class Main_Temp(Tile, Renogy_Curve):
+class Main_Temp(Tile, Curve):
     title = "Shed (°C)"
-    dir = TSDS + "renogy"
-    datum = "Battery Temperature"
+    dir = TSDS + "sungauge40"
+    datum = "temp"
     pos = (2,2)
     svgname = "graph_k.svg"
     dmin = 6
