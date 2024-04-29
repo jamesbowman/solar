@@ -328,13 +328,22 @@ if 0:
         pos = (3, 0)
         dmin = 0
         dmax = 200
-else:
+elif 0:
     class Solar_V(Tile, Renogy_Curve):
         title = "Solar Voltage (V)"
         datum = "Solar Voltage"
         pos = (3, 0)
         dmin = 0
         dmax = 25
+else:
+    class Battery_Current(Tile, Curve):
+        title = "Battery Current (A)"
+        dir = TSDS + "sungauge40"
+        datum = "current"
+        pos = (3,0)
+        svgname = "graph_k.svg"
+        dmin = 6
+        dmax = 30
 
 class Main_V(Tile, Renogy_Curve):
     title = "Main Battery (V)"
