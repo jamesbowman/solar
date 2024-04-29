@@ -353,15 +353,17 @@ class Main_V(Tile, Curve):
     dmin = 11.8
     dmax = 14.7
 
-class main_SOC(Tile, Renogy_Curve):
-    title = "Main SOC (%)"
-    dir = TSDS + "renogy"
-    datum = "SOC"
+class main_SOC(Tile, Curve):
+    title = "Main SOC (Ah)"
+    dir = TSDS + "sungauge40"
+    datum = "soc"
     pos = (1, 1)
-    dmin = 40
-    dmax = 100
+    dmin = 0
+    dmax = 280
     def strvalue(self, d):
         return f"{d:.0f}"
+    def get_datum(self, d):
+        return d.get("soc", 280)
 
 class Coop_V(Tile, Curve):
     title = "Coop Battery (V)"
