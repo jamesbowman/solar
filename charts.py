@@ -115,6 +115,7 @@ class Curve:
             self.t0 = t0 - 24*60*60
             self.t1 = t0
 
+            self.ts = ts
             (times, quality, dd) = smooth(ts, 120, self.t0, self.t1)
 
             self.times = times
@@ -132,6 +133,7 @@ class Curve:
             self.times = []
             self.quality = []
             self.dd = []
+            self.ts = []
 
 
     def valid(self):
@@ -344,6 +346,10 @@ else:
         svgname = "graph_k.svg"
         dmin = 6
         dmax = 30
+        def subtitle(self):
+            avg_a = np.mean([y for (x,y) in self.ts])
+            ah = 24 * avg_a
+            return f"{ah:+.0f} Ah"
 
 class Main_V(Tile, Curve):
     title = "Main Battery (V)"
@@ -358,8 +364,8 @@ class main_SOC(Tile, Curve):
     dir = TSDS + "sungauge40"
     datum = "soc"
     pos = (1, 1)
-    dmin = 0
-    dmax = 280
+    # dmin = 0
+    # dmax = 280
     def strvalue(self, d):
         return f"{d:.0f}"
     def get_datum(self, d):
