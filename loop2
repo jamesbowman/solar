@@ -1,0 +1,14 @@
+set -e
+
+while true
+do
+  python charts.py
+  mv out.png panel_1920_n.png
+  convert -quality 80 panel_1920_n.png panel_1920_n.jpg
+  cp panel_1920_n.jpg ~/tonight/.p/panel_1920_n.jpg
+  scp -q panel_1920_n.jpg excamera.com:excamera/files/ || true
+  find ~/tsd/ -type f -mmin +1500 | xargs rm -f
+  curl --no-progress-meter -z 2400x2400.jpg https://cdn.star.nesdis.noaa.gov/GOES18/ABI/SECTOR/psw/GEOCOLOR/2400x2400.jpg --output 2400x2400.jpg || true
+  python watch/watch.py
+  sleep $((60 - 10#$(date +%S)))
+done
