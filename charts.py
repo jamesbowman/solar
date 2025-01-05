@@ -67,7 +67,7 @@ def smooth(ts, h, t0, t1):
         print("quality", "min", min(quality.flatten()), max(quality.flatten()))
         print(f"{quality=}")
 
-    r = np.where(contrib, vg.sum(1) / contrib, 0.0)
+    r = np.where(contrib, vg.sum(1) / np.maximum(.001, contrib), 0.0)
     return (np.linspace(t0, t1, h), quality, r)
 
 
@@ -104,7 +104,11 @@ class Curve:
         def ld(fn):
             with open(fn) as f:
                 return json.load(f)
-        db = [ld(fn) for fn in samples]
+        try:
+            db = [ld(fn) for fn in samples]
+        except json.decoder.JSONDecodeError:
+            print(f"Invalid JSON in {self.dir}")
+            sys.exit(1)
         return [d for d in db if self.ts(d) > (t0 - 24*60*60)]
 
     def curve(self):
@@ -300,15 +304,16 @@ class ReportMJ:
         mj = 24 * 3600 * avg_w / 1e6
         return f"{mj:.1f} MJ"
 
-class Main_Power(ReportMJ, Tile, Renogy_Curve):
-    title = "Solar Power (W)"
-    dir = TSDS + "renogy"
-    datum = "Solar Power"
-    pos = (1, 0)
-    dmin = 0
-    dmax = 200
-    def strvalue(self, d):
-        return f"{d:.0f}"
+if 1:
+    class Main_Power(ReportMJ, Tile, Renogy_Curve):
+        title = "Solar Power (W)"
+        dir = TSDS + "renogy"
+        datum = "Solar Power"
+        pos = (1, 0)
+        dmin = 0
+        dmax = 200
+        def strvalue(self, d):
+            return f"{d:.0f}"
 
 class Inverter(ReportMJ, Tile, Curve):
     title = "Inverter (W)"
@@ -317,7 +322,7 @@ class Inverter(ReportMJ, Tile, Curve):
     def ts(self, d):
         return d["sys"]["unixtime"]
     def get_datum(self, d):
-        return d["switch:0"]["apower"]
+        return d["switch:0"]["aenergy"]["by_minute"][1] * 0.060
     dmin = 0
     dmax = 200
 

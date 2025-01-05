@@ -1,5 +1,6 @@
 set -e
 
 python charts.py
+exit
 mv out.png panel_1920_n.png
 cp panel*png html/
