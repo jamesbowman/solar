@@ -44,7 +44,7 @@ if __name__ == "__main__":
     renogy = load_json(latest("renogy"))
     if 0:
         display_json_file({
-            "shelly30" : shelly30["switch:0"]["apower"],
+            "shelly30" : shelly30["switch:0"]["aenergy"]["by_minute"][1] * 0.060,
             "sungauge40" : sungauge40,
         })
     else:
