@@ -16,9 +16,12 @@ def latest(sub):
     return directory + f
 
 def load_json(file_path):
-    with open(file_path, 'r') as file:
-        data = json.load(file)
-    return data
+    try:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+        return data
+    except json.decoder.JSONDecodeError:
+        return dict()
 
 def display_json_file(data):
 
@@ -38,14 +41,21 @@ def display_json_file(data):
 if __name__ == "__main__":
     shelly30 = load_json(latest("shelly30"))
     sungauge40 = load_json(latest("sungauge40"))
+    renogy = load_json(latest("renogy"))
     if 0:
         display_json_file({
-            "shelly30" : shelly30["switch:0"]["apower"],
+            "shelly30" : shelly30["switch:0"]["aenergy"]["by_minute"][1] * 0.060,
             "sungauge40" : sungauge40,
         })
     else:
-        apower = shelly30["switch:0"]["apower"]
+        try:
+            # apower = shelly30["switch:0"]["apower"]
+            apower = shelly30["switch:0"]["aenergy"]["by_minute"][1] * 0.06
+        except KeyError:
+            apower = 0
         now = datetime.now()
         hhmm = now.strftime("%H:%M")
 
-        print(f"{hhmm} inverter: {apower:.1f}  current: {sungauge40['current']:+7.3f}  SOC: {sungauge40['soc']:5.1f}")
+        spower = renogy['Solar Power']
+
+        print(f"{hhmm} solar: {spower:3.0f} inverter: {apower:.1f}  current: {sungauge40['current']:+7.3f}  SOC: {sungauge40['soc']:5.1f}")
