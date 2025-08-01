@@ -1,7 +1,6 @@
 import sys
 import struct
 import time
-import time
 import datetime
 import json
 
@@ -38,6 +37,16 @@ calibrations = {
         tscale = (273.15 + 19.1) / 31649,
     ),
 
+    0x2392dad: dict(
+        voffset = 15,
+        vscale = 10.000 / 25007,
+        ioffset = 32858,
+        iscale_p = 1 / (33678 - 32858),
+        iscale_n = 1 / (32858 - 32029),
+        tscale = (273.15 + 19.1) / 31649,
+    ),
+
+
 }
 
 class SunGauge:
@@ -57,18 +66,27 @@ class SunGauge:
         assert id in calibrations, f"Unknown id {id:#x}"
         cal = calibrations[id]
 
+        print(f"{bm=}")
+        bo = (bm - cal["ioffset"])
+        if bo > 0:
+            cc = bo * cal["iscale_p"]
+        else:
+            cc = bo * cal["iscale_n"]
+        cc = round(cc, 3)
+
         return dict(
             n = n,
             id = id,
             raw = [n, a, b, c],
             voltage = round(max(0, (am - cal["voffset"]) * cal["vscale"]), 3),
-            current = round((bm - cal["ioffset"]) * cal["iscale"], 3),
+            current = cc,
             temp =    round((cm * cal["tscale"]) - 273.15, 3),
         )
 
 import i2cdriver
 D="/dev/serial/by-id/usb-FTDI_FT230X_Basic_UART_DO02C6UM-if00-port0"
 D="/dev/serial/by-id/usb-FTDI_FT230X_Basic_UART_DK0C3XLQ-if00-port0"
+D="/dev/serial/by-id/usb-FTDI_FT230X_Basic_UART_DO02C6UM-if00-port0"
 i2=i2cdriver.I2CDriver(D)
 print(i2)
 
@@ -77,6 +95,7 @@ if len(sys.argv) == 1:
     sys.exit(0)
 
 addr = int(sys.argv[1], 0)
+
 if addr in i2.scan():
     if 1:
         with open("soc.json", "r") as f:
@@ -114,15 +133,19 @@ if addr in i2.scan():
         t0 = t
         fmt = "<QQQQI"
         rr = i2.regrd(0x40, 0x00, struct.calcsize(fmt))
-        print(rr.hex(' '))
+        # print(rr.hex(' '))
         (n, a, b, c, id) = struct.unpack(fmt, rr[:struct.calcsize(fmt)])
-        print(hex(id))
-        a_v = max(0, (a / n) - 3.9)
-        b_v = (b / n) - 32944.4
-        c_v = c / n
+        if 0:
+            a_v = max(0, (a / n) - 3.9)
+            b_v = (b / n) - 32944.4
+            c_v = c / n
+        else:
+            a_v = a / n
+            b_v = b / n
+            c_v = c / n
         # print(f"{tr:.3f}", rr.hex())
-        print(f"{tr:.3f}", (n, a, b, c), f"a={a_v:6.1f} b={b_v:6.1f}) c={c_v:6.1f}")
+        print(f"{id:06x}: {tr:.3f}", (n, a, b, c), f"a={a_v:<6.1f} b={b_v:<6.1f} c={c_v:<6.1f}")
         v = 10.000 * a_v / 25040
         i = 0.4977 * b_v / 420.0
         # print(f"v={v:.3f} i={i:.3f}")
-        time.sleep(10)
+        time.sleep(60)
