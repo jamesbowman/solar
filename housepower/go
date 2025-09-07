@@ -1,0 +1,10 @@
+set -e
+
+ROOT=/media/jamesb/CIRCUITPY
+
+rm -rf image
+mkdir -p image/lib
+cp settings.toml code.py safemode.py image/
+cp -r lib/* image/lib/
+rsync -rv --checksum --exclude "*.swp" image/ $ROOT
+sync
