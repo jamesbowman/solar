@@ -317,12 +317,13 @@ if 1:
 
 class Inverter(ReportMJ, Tile, Curve):
     title = "Inverter (W)"
-    dir = TSDS + "shelly30"
+    dir = TSDS + "shellyplugus-d4d4da092de4/status/switch:0"
     pos = (2, 0)
     def ts(self, d):
-        return d["sys"]["unixtime"]
+        print(d)
+        return d["aenergy"]["minute_ts"]
     def get_datum(self, d):
-        return d["switch:0"]["aenergy"]["by_minute"][1] * 0.060
+        return d["aenergy"]["by_minute"][1] * 0.060
     dmin = 0
     dmax = 200
 
