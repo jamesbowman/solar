@@ -18,7 +18,11 @@ def log(dir, dd):
         json.dump(dd, f)
 
 def jlog(dir, msg):
-    t = json.loads(msg)['t']
+    c = json.loads(msg)
+    if 't' in c:
+        t = c['t']
+    else:
+        t = time.time()
     path = Path.home() / "tsd" / dir
     os.makedirs(path, exist_ok=True)
     with open(path / f"{t}.json", "wt") as f:
@@ -32,8 +36,12 @@ def on_message(client, userdata, msg):
 
     if msg.topic == 'houseac/power':
         log("houseac", {'power' : float(de)})
-    if msg.topic == 'bedroom':
-        jlog("bedroom", de)
+    jsons = (
+        'bedroom',
+        'shellyplugus-d4d4da092de4/status/switch:0',
+    )
+    if msg.topic in jsons:
+        jlog(msg.topic, de)
 
 client = mqtt.Client()
 
