@@ -359,8 +359,8 @@ else:
 
 class Main_V(Tile, Curve):
     title = "Main Battery (V)"
-    dir = TSDS + "sungauge40"
-    datum = "voltage"
+    dir = TSDS + "renogy"
+    datum = "Battery Voltage"
     pos = (0, 1)
     dmin = 11.8
     dmax = 14.7
