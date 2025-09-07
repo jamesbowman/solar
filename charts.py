@@ -376,14 +376,24 @@ class main_SOC(Tile, Curve):
     def get_datum(self, d):
         return d.get("soc", 280)
 
-class Coop_V(Tile, Curve):
-    title = "Coop Battery (V)"
-    dir = TSDS + "coop"
-    datum = "vbatt"
-    svgname = "graph_i.svg"
-    pos = (0, 2)
-    dmin = 11
-    dmax = 15
+if 0:
+    class Coop_V(Tile, Curve):
+        title = "Coop Battery (V)"
+        dir = TSDS + "coop"
+        datum = "vbatt"
+        svgname = "graph_i.svg"
+        pos = (0, 2)
+        dmin = 11
+        dmax = 15
+else:
+    class HouseAC(Tile, Curve):
+        title = "House Power (kW)"
+        dir = TSDS + "houseac"
+        datum = "power"
+        pos = (0, 2)
+        dmin = 0
+        def strvalue(self, d):
+            return f"{d / 1000:.1f}"
 
 class Coop_Temp(Tile, Curve):
     title = "Coop (°C)"
