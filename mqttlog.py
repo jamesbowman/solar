@@ -39,6 +39,9 @@ def on_message(client, userdata, msg):
     jsons = (
         'bedroom',
         'shellyplugus-d4d4da092de4/status/switch:0',
+        'coop',
+        'renogy',
+        'sungauge40',
     )
     if msg.topic in jsons:
         jlog(msg.topic, de)

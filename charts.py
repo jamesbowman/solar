@@ -269,6 +269,7 @@ class Tile:
                         s = self.strvalue(dpt)
                         # dwg.add(dwg.text(s, insert=(x, y+100*yo), font_family="Helvetica", font_size="26pt", text_anchor = "middle"))
                         labels.append((s, x, y+100*yo))
+            print(self.title, labels)
 
         l_line = surface.asarray()
 
@@ -320,7 +321,6 @@ class Inverter(ReportMJ, Tile, Curve):
     dir = TSDS + "shellyplugus-d4d4da092de4/status/switch:0"
     pos = (2, 0)
     def ts(self, d):
-        print(d)
         return d["aenergy"]["minute_ts"]
     def get_datum(self, d):
         return d["aenergy"]["by_minute"][1] * 0.060
