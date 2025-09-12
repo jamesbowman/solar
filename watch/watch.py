@@ -16,6 +16,8 @@ def latest(sub):
     return directory + f
 
 def load_json(file_path):
+    if file_path is None:
+        return dict()
     try:
         with open(file_path, 'r') as file:
             data = json.load(file)
@@ -39,18 +41,18 @@ def display_json_file(data):
     console.print(syntax)
 
 if __name__ == "__main__":
-    shelly30 = load_json(latest("shelly30"))
+    shelly30 = load_json(latest("shellyplugus-d4d4da092de4/status/switch:0"))
     sungauge40 = load_json(latest("sungauge40"))
     renogy = load_json(latest("renogy"))
     if 0:
         display_json_file({
-            "shelly30" : shelly30["switch:0"]["aenergy"]["by_minute"][1] * 0.060,
+            "shelly30" : shelly30["aenergy"]["by_minute"][1] * 0.060,
             "sungauge40" : sungauge40,
         })
     else:
         try:
             # apower = shelly30["switch:0"]["apower"]
-            apower = shelly30["switch:0"]["aenergy"]["by_minute"][1] * 0.06
+            apower = shelly30["aenergy"]["by_minute"][1] * 0.06
         except KeyError:
             apower = 0
         now = datetime.now()
@@ -58,4 +60,5 @@ if __name__ == "__main__":
 
         spower = renogy['Solar Power']
 
-        print(f"{hhmm} solar: {spower:3.0f} inverter: {apower:.1f}  current: {sungauge40['current']:+7.3f}  SOC: {sungauge40['soc']:5.1f}")
+        # print(f"{hhmm} solar: {spower:3.0f} inverter: {apower:.1f}  current: {sungauge40['current']:+7.3f}  SOC: {sungauge40['soc']:5.1f}")
+        print(f"{hhmm} solar: {spower:3.0f} inverter: {apower:.1f}  ")

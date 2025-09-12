@@ -269,7 +269,7 @@ class Tile:
                         s = self.strvalue(dpt)
                         # dwg.add(dwg.text(s, insert=(x, y+100*yo), font_family="Helvetica", font_size="26pt", text_anchor = "middle"))
                         labels.append((s, x, y+100*yo))
-            print(self.title, labels)
+            # print(self.title, labels)
 
         l_line = surface.asarray()
 
@@ -365,17 +365,18 @@ class Main_V(Tile, Curve):
     dmin = 11.8
     dmax = 14.7
 
-class main_SOC(Tile, Curve):
-    title = "Main SOC (Ah)"
-    dir = TSDS + "sungauge40"
-    datum = "soc"
-    pos = (1, 1)
-    # dmin = 0
-    # dmax = 280
-    def strvalue(self, d):
-        return f"{d:.0f}"
-    def get_datum(self, d):
-        return d.get("soc", 280)
+if 0:
+    class main_SOC(Tile, Curve):
+        title = "Main SOC (Ah)"
+        dir = TSDS + "sungauge40"
+        datum = "soc"
+        pos = (1, 1)
+        # dmin = 0
+        # dmax = 280
+        def strvalue(self, d):
+            return f"{d:.0f}"
+        def get_datum(self, d):
+            return d.get("soc", 280)
 
 if 0:
     class Coop_V(Tile, Curve):
