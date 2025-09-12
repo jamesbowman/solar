@@ -388,7 +388,7 @@ if 0:
         dmin = 11
         dmax = 15
 else:
-    class HouseAC(Tile, Curve):
+    class HouseAC(ReportMJ, Tile, Curve):
         title = "House Power (kW)"
         dir = TSDS + "houseac"
         datum = "power"
