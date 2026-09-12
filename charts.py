@@ -150,9 +150,9 @@ class Curve:
 TSDS = os.path.expanduser("~/tsd/")
 
 if 1:
-    def db_renogy():
+    def db_litime():
         t0 = time.time()
-        samples = [TSDS + "/renogy/" + fn for fn in os.listdir(TSDS + "/renogy/") if fn.endswith('.json')]
+        samples = [TSDS + "litime/" + fn for fn in os.listdir(TSDS + "litime/") if fn.endswith('.json')]
         def ld(fn):
             with open(fn) as f:
                 try:
@@ -162,11 +162,11 @@ if 1:
         db = [ld(fn) for fn in samples]
         db = [x for x in db if x is not None]
         return [d for d in db if d["t"] > (t0 - 24*60*60)]
-    DB_RENOGY = db_renogy()
+    DB_LITIME = db_litime()
 
-class Renogy_Curve(Curve):
+class LiTime_Curve(Curve):
     def db(self):
-        return DB_RENOGY
+        return DB_LITIME
 
 class CairoSurface:
     def __init__(self, width, height):
@@ -306,10 +306,10 @@ class ReportMJ:
         return f"{mj:.1f} MJ"
 
 if 1:
-    class Main_Power(ReportMJ, Tile, Renogy_Curve):
-        title = "Solar Power (W)"
-        dir = TSDS + "renogy"
-        datum = "Solar Power"
+    class Main_Power(ReportMJ, Tile, LiTime_Curve):
+        title = "Charging Power (W)"
+        dir = TSDS + "litime"
+        datum = "battery_power_w"
         pos = (1, 0)
         dmin = 0
         dmax = 200
@@ -320,7 +320,7 @@ if 1:
     class Inverter(ReportMJ, Tile, Curve):
         title = "Inverter (W)"
         dir = TSDS + "shellyplugus-d4d4da092de4/status/switch:0"
-        pos = (2, 0)
+        pos = (3, 0)
         def ts(self, d):
             if hasattr(d["aenergy"], "minute_ts"):
                 return d["aenergy"]["minute_ts"]
@@ -340,9 +340,9 @@ if 0:
         dmin = 0
         dmax = 200
 elif 0:
-    class Solar_V(Tile, Renogy_Curve):
+    class Solar_V(Tile, LiTime_Curve):
         title = "Solar Voltage (V)"
-        datum = "Solar Voltage"
+        datum = "panel_voltage_v"
         pos = (3, 0)
         dmin = 0
         dmax = 25
@@ -360,10 +360,10 @@ elif 0:
             ah = 24 * avg_a
             return f"{ah:+.0f} Ah"
 
-class Main_V(Tile, Curve):
+class Main_V(Tile, LiTime_Curve):
     title = "Main Battery (V)"
-    dir = TSDS + "renogy"
-    datum = "Battery Voltage"
+    dir = TSDS + "litime"
+    datum = "battery_voltage_v"
     pos = (0, 1)
     dmin = 11.8
     dmax = 14.7
@@ -428,8 +428,8 @@ class Main_Temp(Tile, Curve):
 
 # class Controller_Temp(Draw, Curve):
 #     title = "Controller (°C)"
-#     dir = TSDS + "renogy"
-#     datum = "Controller Temperature"
+#     dir = TSDS + "litime"
+#     datum = "controller_temperature_c"
 #     svgname = "graph_k.svg"
 #     dmin = 6
 #     dmax = 30
