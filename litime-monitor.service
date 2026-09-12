@@ -1,0 +1,18 @@
+[Unit]
+Description=LiTime MPPT Bluetooth telemetry
+Wants=network-online.target bluetooth.service
+After=network-online.target bluetooth.service
+
+[Service]
+Type=simple
+User=jamesb
+WorkingDirectory=/home/jamesb/litime-monitor
+ExecStart=/home/jamesb/litime-monitor/.venv/bin/python -u /home/jamesb/litime-monitor/litime_mppt.py --mqtt-host pi
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=30
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
