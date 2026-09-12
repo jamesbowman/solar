@@ -9,14 +9,15 @@ Diagnostics go to stderr. Default polling interval is 10 seconds.
 
 ## Run on cam1
 
-Files are installed in `/home/jamesb/litime-monitor`, with an isolated `.venv`.
+The service runs the checkout in `/home/jamesb/solar`. Python dependencies
+remain in the existing isolated environment `/home/jamesb/litime-monitor/.venv`.
 
 ```sh
 # Stop the background reader before running another Bluetooth client.
 sudo systemctl stop litime-monitor
-cd /home/jamesb/litime-monitor
-.venv/bin/python litime_mppt.py --samples 3 --debug
-.venv/bin/python litime_mppt.py --mqtt-host pi --mqtt-topic litime
+cd /home/jamesb/solar
+/home/jamesb/litime-monitor/.venv/bin/python litime_mppt.py --samples 3 --debug
+/home/jamesb/litime-monitor/.venv/bin/python litime_mppt.py --mqtt-host pi --mqtt-topic litime
 ```
 
 Omit `--samples` to run continuously. Omit `--mqtt-host` for stdout only.
@@ -35,6 +36,15 @@ must be treated as stale by consumers using `t`. No MQTT control topics exist.
 sudo systemctl restart litime-monitor
 systemctl status litime-monitor
 journalctl -u litime-monitor -f -o cat
+```
+
+After pulling code updates into `/home/jamesb/solar`, restart the service.
+If the unit file changes, install it and reload systemd before restarting:
+
+```sh
+sudo install -m 644 /home/jamesb/solar/litime-monitor.service /etc/systemd/system/litime-monitor.service
+sudo systemctl daemon-reload
+sudo systemctl restart litime-monitor
 ```
 
 To install elsewhere, create a venv, install `litime-requirements.txt`, copy
