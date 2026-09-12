@@ -316,16 +316,19 @@ if 1:
         def strvalue(self, d):
             return f"{d:.0f}"
 
-class Inverter(ReportMJ, Tile, Curve):
-    title = "Inverter (W)"
-    dir = TSDS + "shellyplugus-d4d4da092de4/status/switch:0"
-    pos = (2, 0)
-    def ts(self, d):
-        return d["aenergy"]["minute_ts"]
-    def get_datum(self, d):
-        return d["aenergy"]["by_minute"][1] * 0.060
-    dmin = 0
-    dmax = 200
+if 1:
+    class Inverter(ReportMJ, Tile, Curve):
+        title = "Inverter (W)"
+        dir = TSDS + "shellyplugus-d4d4da092de4/status/switch:0"
+        pos = (2, 0)
+        def ts(self, d):
+            if hasattr(d["aenergy"], "minute_ts"):
+                return d["aenergy"]["minute_ts"]
+            return 0
+        def get_datum(self, d):
+            return d["aenergy"]["by_minute"][1] * 0.060
+        dmin = 0
+        dmax = 200
 
 if 0:
     class Grid(ReportMJ, Tile, Curve):
@@ -343,7 +346,7 @@ elif 0:
         pos = (3, 0)
         dmin = 0
         dmax = 25
-else:
+elif 0:
     class Battery_Current(Tile, Curve):
         title = "Battery Current (A)"
         dir = TSDS + "sungauge40"
@@ -378,24 +381,23 @@ if 0:
         def get_datum(self, d):
             return d.get("soc", 280)
 
-if 0:
-    class Coop_V(Tile, Curve):
-        title = "Coop Battery (V)"
-        dir = TSDS + "coop"
-        datum = "vbatt"
-        svgname = "graph_i.svg"
-        pos = (0, 2)
-        dmin = 11
-        dmax = 15
-else:
-    class HouseAC(ReportMJ, Tile, Curve):
-        title = "House Power (kW)"
-        dir = TSDS + "houseac"
-        datum = "power"
-        pos = (0, 2)
-        dmin = 0
-        def strvalue(self, d):
-            return f"{d / 1000:.1f}"
+class Coop_V(Tile, Curve):
+    title = "Coop Battery (V)"
+    dir = TSDS + "coop"
+    datum = "vbatt"
+    svgname = "graph_i.svg"
+    pos = (1, 1)
+    dmin = 11
+    dmax = 15
+
+class HouseAC(ReportMJ, Tile, Curve):
+    title = "House Power (kW)"
+    dir = TSDS + "houseac"
+    datum = "power"
+    pos = (0, 2)
+    dmin = 0
+    def strvalue(self, d):
+        return f"{d / 1000:.1f}"
 
 class Coop_Temp(Tile, Curve):
     title = "Coop (°C)"
