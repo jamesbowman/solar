@@ -147,7 +147,7 @@ class Curve:
     def strvalue(self, d):
         return f"{d:.1f}"
 
-TSDS = "/home/jamesb/tsd/"
+TSDS = os.path.expanduser("~/tsd/")
 
 if 1:
     def db_renogy():
