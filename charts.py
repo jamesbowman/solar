@@ -2,7 +2,6 @@ import sys
 import time
 import math
 import os
-import json
 
 import numpy as np
 from scipy.ndimage import gaussian_filter
@@ -15,60 +14,7 @@ import sunmoon
 from sunalt import solar_elevations
 import power
 
-def smooth(ts, h, t0, t1):
-    tt = np.array([t for (t,v) in ts]).astype(float)
-    vv = np.array([v for (t,v) in ts]).astype(float)
-    td = t1 - t0
-    # tt = (tt / (max(tt) - min(tt))) - min(tt)
-    tt = (tt - t0) / td
-    w = len(tt)
-    sh = (h, w)
-    print(f"{sh=}")
-    d = np.tile(tt, h).reshape(sh)
-    adj = (np.repeat(np.arange(0, h), w) / (h - 1)).reshape(sh)
-    print(adj)
-
-    x = d - adj
-    c2 = 2e-4
-    g = np.exp(-(x * x) / (2 * c2)).astype(float)
-    v = np.tile(vv, h).reshape(sh)
-    vg = v * g
-    r = vg.sum(1) / g.sum(1)
-    print(np.linspace(t0, t0 + td, h).shape)
-    return (np.linspace(t0, t0 + td, h), r)
-
-def smooth(ts, h, t0, t1):
-    tt = np.array([t for (t,v) in ts]).astype(float)
-    vv = np.array([v for (t,v) in ts]).astype(float)
-
-    w = len(ts)
-    sh = (h, w)
-
-    tt_x = np.tile(tt, h).reshape(sh)
-    vv_x = np.tile(vv, h).reshape(sh)
-
-    tt_y = (np.repeat(np.linspace(t0, t1, h), w)).reshape(sh)
-
-    delta = np.abs(tt_x - tt_y)
-    x = delta / h
-    c2 = 70
-    g = np.exp(-(x * x) / (2 * c2)).astype(float)
-
-    vg = vv_x * g
-
-    contrib = g.sum(1)
-
-    quality = np.minimum(1.0, np.amax(g, 1) / 4e-3)
-    if 0:
-        np.set_printoptions(precision=2)
-        print(f"{sh=}")
-        print(f"{tt_x=}")
-        print(f"{tt_y=}")
-        print("quality", "min", min(quality.flatten()), max(quality.flatten()))
-        print(f"{quality=}")
-
-    r = np.where(contrib, vg.sum(1) / np.maximum(.001, contrib), 0.0)
-    return (np.linspace(t0, t1, h), quality, r)
+from chart_data import clean_samples, gap_limit, load_records, recorded_energy, smooth
 
 
 def rescale(x, x0, x1, y0 = 0, y1 = 1):
@@ -86,7 +32,8 @@ class Curve:
                 rescale(d, self.d0, self.d1, Y0, Y1))
 
     def points(self):
-        return [(self.gpoint(t, q, d)) for (t, q, d) in zip(self.times, self.quality, self.dd)]
+        return [self.gpoint(t, q, d) if q > 0 and np.isfinite(d) else None
+                for t, q, d in zip(self.times, self.quality, self.dd)]
 
     dmin = 999e9
     dmax = -999e9
@@ -97,72 +44,46 @@ class Curve:
     def get_datum(self, d):
         return d[self.datum]
 
+    # None infers a gap threshold from the observed polling cadence (5–30 minutes).
+    max_gap = None
+
     def db(self):
-        t0 = time.time()
-        samples = [self.dir + "/" + fn for fn in os.listdir(self.dir) if fn.endswith('.json')]
-        samples = [fn for fn in samples if os.path.getsize(fn)]
-        def ld(fn):
-            with open(fn) as f:
-                return json.load(f)
-        try:
-            db = [ld(fn) for fn in samples]
-        except json.decoder.JSONDecodeError:
-            print(f"Invalid JSON in {self.dir}")
-            sys.exit(1)
-        return [d for d in db if self.ts(d) > (t0 - 24*60*60)]
+        return load_records(self.dir)
 
     def curve(self):
-        ts = [(self.ts(d), self.get_datum(d)) for d in self.db()]
-
-        if ts:
-            t0 = time.time()
-            self.t0 = t0 - 24*60*60
-            self.t1 = t0
-
-            self.ts = ts
-            (times, quality, dd) = smooth(ts, 120, self.t0, self.t1)
-
-            self.times = times
-            self.quality = quality
-            self.dd = dd
-
-            valid = self.valid()
-
-            self.d0 = min(self.dmin, min(valid))
-            self.d1 = max(self.dmax, max(valid))
-
-            poly = self.points()
-            return poly
-        else:
-            self.times = []
-            self.quality = []
-            self.dd = []
-            self.ts = []
-
+        self.t1 = time.time()
+        self.t0 = self.t1 - 24*60*60
+        samples = []
+        for record in self.db():
+            try:
+                samples.append((self.ts(record), self.get_datum(record)))
+            except (KeyError, TypeError, IndexError):
+                # A record may be valid JSON but omit this chart's metric.
+                continue
+        self.samples = clean_samples(samples, self.t0, self.t1)
+        self.gap_seconds = gap_limit(self.samples) if self.max_gap is None else self.max_gap
+        self.times, self.quality, self.dd = smooth(
+            self.samples, 120, self.t0, self.t1, self.gap_seconds)
+        valid = self.valid()
+        if not valid:
+            return []
+        self.d0 = min(self.dmin, min(valid))
+        self.d1 = max(self.dmax, max(valid))
+        if self.d0 == self.d1:
+            padding = max(abs(self.d0) * 0.05, 0.5)
+            self.d0 -= padding
+            self.d1 += padding
+        return self.points()
 
     def valid(self):
-        vq = zip(self.dd, self.quality)
-        return [v for (v,q) in vq if q > 0.5]
+        return [v for v, q in zip(self.dd, self.quality) if q > 0 and np.isfinite(v)]
 
     def strvalue(self, d):
         return f"{d:.1f}"
 
 TSDS = os.path.expanduser("~/tsd/")
 
-if 1:
-    def db_litime():
-        t0 = time.time()
-        samples = [TSDS + "litime/" + fn for fn in os.listdir(TSDS + "litime/") if fn.endswith('.json')]
-        def ld(fn):
-            with open(fn) as f:
-                try:
-                    return json.load(f)
-                except json.decoder.JSONDecodeError:
-                    return None
-        db = [ld(fn) for fn in samples]
-        db = [x for x in db if x is not None]
-        return [d for d in db if d["t"] > (t0 - 24*60*60)]
-    DB_LITIME = db_litime()
+DB_LITIME = load_records(TSDS + "litime")
 
 class LiTime_Curve(Curve):
     def db(self):
@@ -242,34 +163,32 @@ class Tile:
         cc = self.curve()
         labels = []
         if cc:
-            for (p0,p1) in zip(cc, cc[1:]):
-                (_, x, y) = p0
+            for p0, p1 in zip(cc, cc[1:]):
+                if p0 is None or p1 is None:
+                    continue
+                _, x, y = p0
                 ctx.move_to(x, y)
-                (q, x, y) = p1
-                ctx.set_line_width(5 * q)
+                _, x, y = p1
                 ctx.line_to(x, y)
                 ctx.stroke()
+            # Isolated samples are dots, not invented line segments.
+            for i, point in enumerate(cc):
+                if point is not None and (i == 0 or cc[i - 1] is None) and (i == len(cc) - 1 or cc[i + 1] is None):
+                    _, x, y = point
+                    ctx.arc(x, y, 2.5, 0, 2 * math.pi)
+                    ctx.fill()
 
-            dd = self.dd
-            if not any(np.isnan(dd)):
-                valid = self.valid()
-                if valid:
-                    mn = min(valid)
-                    mx = max(valid)
-                    annotate = [(-.3, mx)]
-                    if mn != mx:
-                        annotate += [(.2, mn)]
-                    for (yo, dpt) in annotate:
-                        L = list(dd)
-                        i = len(L) - L[::-1].index(dpt) - 1
-                        (q, x, y) = self.gpoint(self.times[i], 1.0, dd[i])
-                        # dwg.add(dwg.circle((x, y), r=3, **args))
-                        ctx.arc(x, y, 6, 0, 2 * 3.14159)
-                        ctx.fill()
-                        s = self.strvalue(dpt)
-                        # dwg.add(dwg.text(s, insert=(x, y+100*yo), font_family="Helvetica", font_size="26pt", text_anchor = "middle"))
-                        labels.append((s, x, y+100*yo))
-            # print(self.title, labels)
+            valid = self.valid()
+            mn, mx = min(valid), max(valid)
+            annotate = [(-.3, mx)]
+            if mn != mx:
+                annotate += [(.2, mn)]
+            for yo, dpt in annotate:
+                i = np.flatnonzero((self.quality > 0) & (self.dd == dpt))[-1]
+                _, x, y = cc[i]
+                ctx.arc(x, y, 6, 0, 2 * math.pi)
+                ctx.fill()
+                labels.append((self.strvalue(dpt), x, y + 100 * yo))
 
         l_line = surface.asarray()
 
@@ -297,13 +216,14 @@ class Tile:
         self.im = Image.fromarray(final)
 
     def subtitle(self):
-        return ""
+        return "" if self.valid() else "No data"
 
 class ReportMJ:
     def subtitle(self):
-        avg_w = np.mean(self.valid())
-        mj = 24 * 3600 * avg_w / 1e6
-        return f"{mj:.1f} MJ"
+        energy, duration = recorded_energy(self.samples, self.gap_seconds)
+        if not duration:
+            return "No data" if not self.samples else "Insufficient data"
+        return f"{energy / 1e6:.1f} MJ"
 
 if 1:
     class Main_Power(ReportMJ, Tile, LiTime_Curve):
@@ -322,7 +242,7 @@ if 1:
         dir = TSDS + "shellyplugus-d4d4da092de4/status/switch:0"
         pos = (2, 0)
         def ts(self, d):
-            if hasattr(d["aenergy"], "minute_ts"):
+            if "minute_ts" in d["aenergy"]:
                 return d["aenergy"]["minute_ts"]
             return 0
         def get_datum(self, d):
@@ -356,7 +276,7 @@ elif 0:
         dmin = 6
         dmax = 30
         def subtitle(self):
-            avg_a = np.mean([y for (x,y) in self.ts])
+            avg_a = np.mean([y for (x,y) in self.samples])
             ah = 24 * avg_a
             return f"{ah:+.0f} Ah"
 
