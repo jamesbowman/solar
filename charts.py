@@ -339,13 +339,13 @@ if 0:
         pos = (3, 0)
         dmin = 0
         dmax = 200
-elif 0:
+elif 1:
     class Solar_V(Tile, LiTime_Curve):
-        title = "Solar Voltage (V)"
+        title = "Panel Voltage (V)"
         datum = "panel_voltage_v"
-        pos = (3, 0)
+        pos = (0, 1)
         dmin = 0
-        dmax = 25
+        dmax = 100
 elif 0:
     class Battery_Current(Tile, Curve):
         title = "Battery Current (A)"
@@ -364,7 +364,7 @@ class Main_V(Tile, LiTime_Curve):
     title = "Main Battery (V)"
     dir = TSDS + "litime"
     datum = "battery_voltage_v"
-    pos = (0, 1)
+    pos = (1, 1)
     dmin = 11.8
     dmax = 14.7
 
@@ -394,7 +394,7 @@ class HouseAC(ReportMJ, Tile, Curve):
     title = "House Power (kW)"
     dir = TSDS + "houseac"
     datum = "power"
-    pos = (0, 2)
+    pos = (2, 1)
     dmin = 0
     def strvalue(self, d):
         return f"{d / 1000:.1f}"
@@ -447,7 +447,7 @@ class Pressure(Tile, Curve):
     title = "Pressure (hPa)"
     dir = TSDS + "bedroom"
     datum = "pressure"
-    pos = (2, 1)
+    pos = (0, 2)
     dmin = 1010
     dmax = 1030
     def strvalue(self, d):
