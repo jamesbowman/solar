@@ -8,7 +8,9 @@ from rich.theme import Theme
 from datetime import datetime
 
 def latest(sub):
-    directory = f'/home/jamesb/tsd/{sub}/'
+    directory = os.path.expanduser(f'~/tsd/{sub}/')
+    if not os.path.isdir(directory):
+        return None
     json_files = [f for f in os.listdir(directory) if f.endswith('.json')]
     if not json_files:
         return None
@@ -22,7 +24,7 @@ def load_json(file_path):
         with open(file_path, 'r') as file:
             data = json.load(file)
         return data
-    except json.decoder.JSONDecodeError:
+    except (FileNotFoundError, json.decoder.JSONDecodeError):
         return dict()
 
 def display_json_file(data):
@@ -42,23 +44,13 @@ def display_json_file(data):
 
 if __name__ == "__main__":
     shelly30 = load_json(latest("shellyplugus-d4d4da092de4/status/switch:0"))
-    sungauge40 = load_json(latest("sungauge40"))
-    renogy = load_json(latest("renogy"))
-    if 0:
-        display_json_file({
-            "shelly30" : shelly30["aenergy"]["by_minute"][1] * 0.060,
-            "sungauge40" : sungauge40,
-        })
-    else:
-        try:
-            # apower = shelly30["switch:0"]["apower"]
-            apower = shelly30["aenergy"]["by_minute"][1] * 0.06
-        except KeyError:
-            apower = 0
-        now = datetime.now()
-        hhmm = now.strftime("%H:%M")
-
-        spower = renogy.get('Solar Power', 0)
-
-        # print(f"{hhmm} solar: {spower:3.0f} inverter: {apower:.1f}  current: {sungauge40['current']:+7.3f}  SOC: {sungauge40['soc']:5.1f}")
-        print(f"{hhmm} solar: {spower:3.0f} inverter: {apower:.1f}  ")
+    litime = load_json(latest("litime"))
+    try:
+        apower = shelly30["aenergy"]["by_minute"][1] * 0.06
+    except (KeyError, IndexError, TypeError):
+        apower = None
+    hhmm = datetime.now().strftime("%H:%M")
+    spower = litime.get('battery_power_w')
+    charging = f"{spower:.0f} W" if spower is not None else "N/A"
+    inverter = f"{apower:.1f} W" if apower is not None else "N/A"
+    print(f"{hhmm} charging: {charging} inverter: {inverter}")
