@@ -320,7 +320,7 @@ if 1:
     class Inverter(ReportMJ, Tile, Curve):
         title = "Inverter (W)"
         dir = TSDS + "shellyplugus-d4d4da092de4/status/switch:0"
-        pos = (3, 0)
+        pos = (2, 0)
         def ts(self, d):
             if hasattr(d["aenergy"], "minute_ts"):
                 return d["aenergy"]["minute_ts"]
@@ -386,7 +386,7 @@ class Coop_V(Tile, Curve):
     dir = TSDS + "coop"
     datum = "vbatt"
     svgname = "graph_i.svg"
-    pos = (1, 1)
+    pos = (3, 0)
     dmin = 11
     dmax = 15
 
@@ -403,7 +403,7 @@ class Coop_Temp(Tile, Curve):
     title = "Coop (°C)"
     dir = TSDS + "coop"
     datum = "temp"
-    pos = (1, 2)
+    pos = (3, 2)
     dmin = 6
     dmax = 30
 
@@ -439,7 +439,7 @@ class Upstairs_Temp(Tile, Curve):
     dir = TSDS + "bedroom"
     datum = "temp"
     svgname = "graph_l.svg"
-    pos = (3, 2)
+    pos = (1, 2)
     dmin = 6
     dmax = 30
 
