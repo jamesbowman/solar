@@ -58,7 +58,7 @@ if __name__ == "__main__":
         now = datetime.now()
         hhmm = now.strftime("%H:%M")
 
-        spower = renogy['Solar Power']
+        spower = renogy.get('Solar Power', 0)
 
         # print(f"{hhmm} solar: {spower:3.0f} inverter: {apower:.1f}  current: {sungauge40['current']:+7.3f}  SOC: {sungauge40['soc']:5.1f}")
         print(f"{hhmm} solar: {spower:3.0f} inverter: {apower:.1f}  ")
