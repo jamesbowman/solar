@@ -1,4 +1,4 @@
-"""MQTT connection shared by the coop and temperature sensor publishers."""
+"""MQTT connection shared by the coop and temperature sensor services."""
 
 from contextlib import contextmanager
 import json
@@ -26,9 +26,19 @@ def on_connect_fail(client, userdata):
 
 
 @contextmanager
-def connection(host="pi", port=1883):
+def connection(host="pi", port=1883, subscriptions=(), on_message=None):
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
-    client.on_connect = on_connect
+
+    def connected(client, userdata, flags, reason_code, properties):
+        on_connect(client, userdata, flags, reason_code, properties)
+        if not reason_code.is_failure and subscriptions:
+            result, _ = client.subscribe([(topic, 0) for topic in subscriptions])
+            if result != mqtt.MQTT_ERR_SUCCESS:
+                LOG.warning("MQTT subscription failed: %s", mqtt.error_string(result))
+
+    # Install callbacks before connecting, and resubscribe after every reconnect.
+    client.on_connect = connected
+    client.on_message = on_message
     client.on_disconnect = on_disconnect
     client.on_connect_fail = on_connect_fail
     client.reconnect_delay_set(min_delay=1, max_delay=30)

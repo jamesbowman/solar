@@ -104,6 +104,33 @@ class BrokerRecoveryTest(unittest.TestCase):
             self.assertTrue(subscribed.wait(10), "Subscriber did not reconnect")
             check_delivery("after restart")
 
+    def test_subscription_is_restored_after_broker_restart(self):
+        self.start_broker()
+        received = queue.Queue()
+        def on_message(client, userdata, message):
+            received.put(json.loads(message.payload))
+        with sensor_mqtt.connection("127.0.0.1", self.port) as publisher:
+            with sensor_mqtt.connection("127.0.0.1", self.port, subscriptions=('litime',),
+                                        on_message=on_message) as subscriber:
+                def check_delivery(phase):
+                    self.wait_for(lambda: publisher.is_connected() and subscriber.is_connected(),
+                                  "Clients did not connect")
+                    deadline = time.monotonic() + 10
+                    while time.monotonic() < deadline:
+                        sensor_mqtt.publish(publisher, 'litime', {'phase': phase})
+                        try:
+                            if received.get(timeout=0.2) == {'phase': phase}:
+                                return
+                        except queue.Empty:
+                            pass
+                    self.fail("Subscription did not receive " + phase)
+                check_delivery('before restart')
+                self.stop_broker()
+                self.wait_for(lambda: not publisher.is_connected() and not subscriber.is_connected(),
+                              "Disconnect not detected")
+                self.start_broker()
+                check_delivery('after restart')
+
 
 if __name__ == "__main__":
     unittest.main()
