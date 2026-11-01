@@ -1,6 +1,9 @@
 # LiTime MPPT reader on cam1
 
-Controller: `BT-LTMPPT2430`, Bluetooth address `C8:47:80:63:1B:C3`.
+Controller: `BT-LTMPPT2430`, Bluetooth address `C8:47:81:05:B5:91`.
+The replacement controller was installed on 2026-11-01; the previous unit used
+`C8:47:80:63:1B:C3`. The reader's default address now targets the replacement;
+use `--address` to override it.
 The reader sends only Modbus function 03 (read holding registers), requesting
 19 registers starting at `0x0101` over BLE characteristic `ffe1`.
 It prints one JSON object per sample to stdout, with Unix timestamp `t`, units

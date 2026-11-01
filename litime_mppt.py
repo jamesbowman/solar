@@ -15,7 +15,7 @@ import struct
 import time
 
 LOG = logging.getLogger("litime")
-ADDRESS = "C8:47:80:63:1B:C3"
+ADDRESS = "C8:47:81:05:B5:91"
 CHARACTERISTIC = "0000ffe1-0000-1000-8000-00805f9b34fb"
 REQUEST = bytes.fromhex("010301010013543b")
 
